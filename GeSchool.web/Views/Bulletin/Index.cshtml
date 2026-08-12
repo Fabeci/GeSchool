@@ -1,0 +1,52 @@
+@model IReadOnlyList<EtudiantDto>
+
+@{
+    ViewData["Title"] = "Bulletins";
+    ViewData["Subtitle"] = "Consulter le bulletin d'un étudiant";
+}
+
+<div class="gs-page-header">
+    <div class="gs-search">
+        @IconHelper.Render("search")
+        <input type="search" class="form-control" placeholder="Rechercher un étudiant..." data-table-search data-table-target="#bulletinTable" aria-label="Rechercher un étudiant" />
+    </div>
+</div>
+
+@if (Model.Count == 0)
+{
+    <partial name="_EmptyState" model="@(new EmptyStateViewModel { Icon = "award", Title = "Aucun étudiant", Message = "Aucun étudiant n'a encore été créé." })" />
+}
+else
+{
+    <div class="gs-table-wrapper gs-table-responsive">
+        <table class="gs-table" id="bulletinTable">
+            <thead>
+                <tr>
+                    <th>N° Étudiant</th>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th class="col-actions"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr data-row>
+                        <td>@item.NumeroEtudiant</td>
+                        <td>@item.Nom</td>
+                        <td>@item.Prenom</td>
+                        <td class="col-actions">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
+                                @IconHelper.Render("award")
+                                Voir le bulletin
+                            </a>
+                        </td>
+                    </tr>
+                }
+                <tr data-search-empty style="display:none;">
+                    <td colspan="4" style="text-align:center;color:var(--text-secondary);padding:var(--space-5);">Aucun résultat pour cette recherche.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+}

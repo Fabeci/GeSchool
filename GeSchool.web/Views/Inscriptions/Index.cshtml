@@ -1,0 +1,62 @@
+@model IReadOnlyList<InscriptionDto>
+@{
+    ViewData["Title"] = "Inscriptions";
+    ViewData["Subtitle"] = "Gérer les inscriptions aux cours";
+    var etudiants = (Dictionary<int, EtudiantDto>)ViewBag.Etudiants;
+    var cours = (Dictionary<int, CoursDto>)ViewBag.Cours;
+}
+
+<div class="gs-page-header">
+    <div class="gs-search">
+        @IconHelper.Render("search")
+        <input type="search" class="form-control" placeholder="Rechercher..." data-table-search data-table-target="#inscriptionsTable" aria-label="Rechercher une inscription" />
+    </div>
+    <a asp-action="Create" class="btn btn-primary">
+        @IconHelper.Render("plus")
+        Nouvelle inscription
+    </a>
+</div>
+
+@if (Model.Count == 0)
+{
+    <partial name="_EmptyState" model="@(new EmptyStateViewModel { Icon = "clipboard-list", Title = "Aucune inscription", Message = "Aucune inscription n'a encore été enregistrée.", ActionText = "Créer une inscription", ActionController = "Inscriptions" })" />
+}
+else
+{
+    <div class="gs-table-wrapper gs-table-responsive">
+        <table class="gs-table" id="inscriptionsTable">
+            <thead>
+                <tr>
+                    <th>Étudiant</th>
+                    <th>Cours</th>
+                    <th>Date d'inscription</th>
+                    <th class="col-actions"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    var etudiantLabel = etudiants.TryGetValue(item.EtudiantId, out var e) ? $"{e.NumeroEtudiant} - {e.Nom} {e.Prenom}" : item.EtudiantId.ToString();
+                    var coursLabel = cours.TryGetValue(item.CoursId, out var c) ? $"{c.Code} - {c.Intitule}" : item.CoursId.ToString();
+                    <tr data-row>
+                        <td>@etudiantLabel</td>
+                        <td>@coursLabel</td>
+                        <td>@item.DateInscription.ToString("yyyy-MM-dd")</td>
+                        <td class="col-actions">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn-icon" title="Détails" aria-label="Détails">@IconHelper.Render("eye")</a>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn-icon" title="Modifier" aria-label="Modifier">@IconHelper.Render("pencil")</a>
+                            <button type="button" class="btn-icon" title="Supprimer" aria-label="Supprimer" data-bs-toggle="modal" data-bs-target="#confirmDeleteInscription" data-id="@item.Id" data-label="@etudiantLabel — @coursLabel">
+                                @IconHelper.Render("trash")
+                            </button>
+                        </td>
+                    </tr>
+                }
+                <tr data-search-empty style="display:none;">
+                    <td colspan="4" style="text-align:center;color:var(--text-secondary);padding:var(--space-5);">Aucun résultat pour cette recherche.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+}
+
+<partial name="_ConfirmDeleteModal" model="@(new ConfirmDeleteModalViewModel { Id = "confirmDeleteInscription", Title = "Supprimer cette inscription ?", Message = "Les notes associées seront également supprimées. Cette action est irréversible.", Controller = "Inscriptions" })" />

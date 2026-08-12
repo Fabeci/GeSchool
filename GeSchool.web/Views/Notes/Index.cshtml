@@ -1,0 +1,72 @@
+@model IReadOnlyList<NoteDto>
+@{
+    ViewData["Title"] = "Notes";
+    ViewData["Subtitle"] = "Suivre les notes des étudiants";
+    var labels = (Dictionary<int, string>)ViewBag.InscriptionLabels;
+
+    string TypeBadgeClass(TypeEvaluation type) => type switch
+    {
+        TypeEvaluation.Examen => "warning",
+        TypeEvaluation.TP => "primary",
+        TypeEvaluation.Projet => "neutral",
+        _ => "info"
+    };
+}
+
+<div class="gs-page-header">
+    <div class="gs-search">
+        @IconHelper.Render("search")
+        <input type="search" class="form-control" placeholder="Rechercher..." data-table-search data-table-target="#notesTable" aria-label="Rechercher une note" />
+    </div>
+    <a asp-action="Create" class="btn btn-primary">
+        @IconHelper.Render("plus")
+        Nouvelle note
+    </a>
+</div>
+
+@if (Model.Count == 0)
+{
+    <partial name="_EmptyState" model="@(new EmptyStateViewModel { Icon = "file-text", Title = "Aucune note", Message = "Aucune note n'a encore été saisie.", ActionText = "Créer une note", ActionController = "Notes" })" />
+}
+else
+{
+    <div class="gs-table-wrapper gs-table-responsive">
+        <table class="gs-table" id="notesTable">
+            <thead>
+                <tr>
+                    <th>Inscription</th>
+                    <th>Valeur</th>
+                    <th>Type d'évaluation</th>
+                    <th>Date</th>
+                    <th class="col-actions"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    var label = labels.TryGetValue(item.InscriptionId, out var l) ? l : item.InscriptionId.ToString();
+                    <tr data-row>
+                        <td>@label</td>
+                        <td>
+                            <span class="badge-soft @(item.Valeur >= 10 ? "success" : "danger")">@item.Valeur / 20</span>
+                        </td>
+                        <td><span class="badge-soft @TypeBadgeClass(item.TypeEvaluation)">@item.TypeEvaluation</span></td>
+                        <td>@item.DateEvaluation.ToString("yyyy-MM-dd")</td>
+                        <td class="col-actions">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn-icon" title="Détails" aria-label="Détails">@IconHelper.Render("eye")</a>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn-icon" title="Modifier" aria-label="Modifier">@IconHelper.Render("pencil")</a>
+                            <button type="button" class="btn-icon" title="Supprimer" aria-label="Supprimer" data-bs-toggle="modal" data-bs-target="#confirmDeleteNote" data-id="@item.Id" data-label="@label">
+                                @IconHelper.Render("trash")
+                            </button>
+                        </td>
+                    </tr>
+                }
+                <tr data-search-empty style="display:none;">
+                    <td colspan="5" style="text-align:center;color:var(--text-secondary);padding:var(--space-5);">Aucun résultat pour cette recherche.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+}
+
+<partial name="_ConfirmDeleteModal" model="@(new ConfirmDeleteModalViewModel { Id = "confirmDeleteNote", Title = "Supprimer cette note ?", Message = "Cette action est irréversible.", Controller = "Notes" })" />

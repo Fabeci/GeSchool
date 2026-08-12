@@ -1,0 +1,30 @@
+@model GeSchool.web.ViewModels.UserListItemViewModel
+
+@{
+    ViewData["Title"] = "Supprimer un utilisateur";
+}
+
+<div class="card" style="max-width:560px;">
+    <div class="card-body">
+        <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom:var(--space-4);"></div>
+        <p>Confirmer la suppression du compte suivant ?</p>
+        <dl style="margin:0 0 var(--space-4);">
+            <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Email</dt>
+            <dd>@Model.Email</dd>
+            <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Nom</dt>
+            <dd>@Model.Nom @Model.Prenom</dd>
+            <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Rôle(s)</dt>
+            <dd>@string.Join(", ", Model.Roles)</dd>
+        </dl>
+        <form asp-controller="Users" asp-action="Delete" method="post">
+            <input type="hidden" asp-for="Id" />
+            <div style="display:flex;gap:var(--space-2);">
+                <button type="submit" class="btn btn-danger">
+                    @IconHelper.Render("trash")
+                    Supprimer
+                </button>
+                <a asp-action="Index" class="btn btn-link">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>

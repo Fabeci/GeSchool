@@ -1,0 +1,9 @@
+@{
+    ViewData["Title"] = "Bulletin non disponible";
+}
+
+<partial name="_EmptyState" model="@(new GeSchool.web.ViewModels.EmptyStateViewModel {
+    Icon = "info",
+    Title = "Compte non lié",
+    Message = "Votre compte n'est pas encore lié à une fiche étudiant. Contactez l'administration pour faire le lien."
+})" />

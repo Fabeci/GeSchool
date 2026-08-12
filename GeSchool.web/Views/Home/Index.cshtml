@@ -1,8 +1,17 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Accueil";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="card" style="max-width:560px;">
+    <div class="card-body" style="text-align:center;">
+        <div class="icon-wrap" style="margin:0 auto var(--space-4);">
+            @IconHelper.Render("graduation-cap")
+        </div>
+        <h1 style="font-size:1.25rem;font-weight:700;margin:0 0 var(--space-2);">Bienvenue sur GeSchool</h1>
+        <p style="color:var(--text-secondary);margin:0 0 var(--space-4);">Plateforme de gestion de la scolarité.</p>
+        <a asp-controller="Dashboard" asp-action="Index" class="btn btn-primary">
+            @IconHelper.Render("dashboard")
+            Aller au tableau de bord
+        </a>
+    </div>
 </div>

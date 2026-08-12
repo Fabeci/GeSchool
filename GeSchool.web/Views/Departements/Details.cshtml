@@ -1,0 +1,25 @@
+@model DepartementDto
+
+@{
+    ViewData["Title"] = "Détails du département";
+}
+
+<div class="card" style="max-width:560px;">
+    <div class="card-header">@Model.Nom</div>
+    <div class="card-body">
+        <dl style="margin:0;">
+            <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.03em;">Nom</dt>
+            <dd style="margin:0 0 var(--space-4);">@Model.Nom</dd>
+            <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.03em;">Description</dt>
+            <dd style="margin:0;">@(string.IsNullOrWhiteSpace(Model.Description) ? "—" : Model.Description)</dd>
+        </dl>
+    </div>
+</div>
+
+<div style="margin-top:var(--space-4);display:flex;gap:var(--space-2);">
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+        @IconHelper.Render("pencil")
+        Modifier
+    </a>
+    <a asp-action="Index" class="btn btn-outline-secondary">Retour à la liste</a>
+</div>

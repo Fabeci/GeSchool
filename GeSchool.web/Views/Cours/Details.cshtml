@@ -1,0 +1,38 @@
+@model CoursDto
+@{
+    ViewData["Title"] = "Détails du cours";
+    var departements = (Dictionary<int, DepartementDto>)ViewBag.DepartementsById;
+    var enseignants = (Dictionary<int, EnseignantDto>)ViewBag.EnseignantsById;
+}
+
+<div class="card" style="max-width:560px;">
+    <div class="card-header">@Model.Code - @Model.Intitule</div>
+    <div class="card-body">
+        <dl style="margin:0;display:grid;gap:var(--space-4);">
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Crédits</dt>
+                <dd style="margin:0;">@Model.Credits</dd>
+            </div>
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Semestre</dt>
+                <dd style="margin:0;">@Model.Semestre</dd>
+            </div>
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Enseignant</dt>
+                <dd style="margin:0;">@(enseignants.TryGetValue(Model.EnseignantId, out var e) ? $"{e.Nom} {e.Prenom}" : "—")</dd>
+            </div>
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Département</dt>
+                <dd style="margin:0;">@(departements.TryGetValue(Model.DepartementId, out var d) ? d.Nom : "—")</dd>
+            </div>
+        </dl>
+    </div>
+</div>
+
+<div style="margin-top:var(--space-4);display:flex;gap:var(--space-2);">
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+        @IconHelper.Render("pencil")
+        Modifier
+    </a>
+    <a asp-action="Index" class="btn btn-outline-secondary">Retour à la liste</a>
+</div>

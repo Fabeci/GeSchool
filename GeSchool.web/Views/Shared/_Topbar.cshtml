@@ -1,0 +1,59 @@
+@inject SignInManager<ApplicationUser> SignInManager
+
+<header class="gs-topbar">
+    <div style="display:flex;align-items:center;gap:1rem;min-width:0;">
+        <button type="button" class="btn-icon gs-sidebar-toggle" id="gsSidebarToggle" aria-label="Ouvrir le menu" style="display:none;">
+            @IconHelper.Render("menu")
+        </button>
+        <div class="gs-topbar-title">
+            <h1>@(ViewData["Title"] ?? "GeSchool")</h1>
+            @if (ViewData["Subtitle"] is string subtitle)
+            {
+                <p>@subtitle</p>
+            }
+        </div>
+    </div>
+
+    <div class="gs-topbar-actions">
+        <div class="dropdown">
+            <button class="btn-icon" type="button" id="gsThemeToggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Changer de thème" title="Thème">
+                @IconHelper.Render("sun")
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><button type="button" class="dropdown-item" data-theme-choice="light">@IconHelper.Render("sun") Clair</button></li>
+                <li><button type="button" class="dropdown-item" data-theme-choice="dark">@IconHelper.Render("moon") Sombre</button></li>
+                <li><button type="button" class="dropdown-item" data-theme-choice="system">@IconHelper.Render("monitor") Système</button></li>
+            </ul>
+        </div>
+
+        @if (SignInManager.IsSignedIn(User))
+        {
+            var role = User.IsInRole("Administrateur") ? "Administrateur" : User.IsInRole("Enseignant") ? "Enseignant" : User.IsInRole("Etudiant") ? "Étudiant" : "Utilisateur";
+            var displayName = User.Identity!.Name ?? "?";
+            var initial = displayName.Trim().Length > 0 ? displayName.Trim()[..1].ToUpperInvariant() : "?";
+            <div class="dropdown">
+                <button class="gs-user-menu-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="gs-avatar">@initial</span>
+                    <span class="d-none d-sm-inline">@displayName</span>
+                    @IconHelper.Render("chevron-down")
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><span class="dropdown-item-text text-secondary" style="font-size:.8125rem;">@role</span></li>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li>
+                        <form asp-controller="Account" asp-action="Logout" method="post">
+                            <button type="submit" class="dropdown-item">
+                                @IconHelper.Render("log-out")
+                                Se déconnecter
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        }
+        else
+        {
+            <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-sm">Se connecter</a>
+        }
+    </div>
+</header>

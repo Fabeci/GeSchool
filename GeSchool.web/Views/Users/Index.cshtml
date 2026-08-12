@@ -1,0 +1,76 @@
+@model IReadOnlyList<UserListItemViewModel>
+
+@{
+    ViewData["Title"] = "Utilisateurs";
+    ViewData["Subtitle"] = "Gérer les comptes et leurs rôles";
+
+    string RoleBadgeClass(string role) => role switch
+    {
+        "Administrateur" => "danger",
+        "Enseignant" => "info",
+        "Etudiant" => "success",
+        _ => "neutral"
+    };
+}
+
+<div class="gs-page-header">
+    <div class="gs-search">
+        @IconHelper.Render("search")
+        <input type="search" class="form-control" placeholder="Rechercher un utilisateur..." data-table-search data-table-target="#usersTable" aria-label="Rechercher un utilisateur" />
+    </div>
+    <a asp-action="Create" class="btn btn-primary">
+        @IconHelper.Render("plus")
+        Créer un utilisateur
+    </a>
+</div>
+
+@if (Model.Count == 0)
+{
+    <partial name="_EmptyState" model="@(new EmptyStateViewModel { Icon = "users", Title = "Aucun utilisateur", Message = "Aucun compte utilisateur trouvé.", ActionText = "Créer un utilisateur", ActionController = "Users" })" />
+}
+else
+{
+    <div class="gs-table-wrapper gs-table-responsive">
+        <table class="gs-table" id="usersTable">
+            <thead>
+                <tr>
+                    <th>Utilisateur</th>
+                    <th>Email</th>
+                    <th>Rôle(s)</th>
+                    <th class="col-actions"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    var initiale = item.Nom.Length > 0 ? item.Nom[..1].ToUpperInvariant() : "?";
+                    <tr data-row>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:var(--space-3);">
+                                <span class="gs-avatar">@initiale</span>
+                                <span>@item.Nom @item.Prenom</span>
+                            </div>
+                        </td>
+                        <td>@item.Email</td>
+                        <td>
+                            @foreach (var role in item.Roles)
+                            {
+                                <span class="badge-soft @RoleBadgeClass(role)">@role</span>
+                            }
+                        </td>
+                        <td class="col-actions">
+                            <button type="button" class="btn-icon" title="Supprimer" aria-label="Supprimer @item.Nom" data-bs-toggle="modal" data-bs-target="#confirmDeleteUser" data-id="@item.Id" data-label="@item.Nom @item.Prenom (@item.Email)">
+                                @IconHelper.Render("trash")
+                            </button>
+                        </td>
+                    </tr>
+                }
+                <tr data-search-empty style="display:none;">
+                    <td colspan="4" style="text-align:center;color:var(--text-secondary);padding:var(--space-5);">Aucun résultat pour cette recherche.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+}
+
+<partial name="_ConfirmDeleteModal" model="@(new ConfirmDeleteModalViewModel { Id = "confirmDeleteUser", Title = "Supprimer ce compte ?", Message = "Cette action est irréversible.", Controller = "Users" })" />

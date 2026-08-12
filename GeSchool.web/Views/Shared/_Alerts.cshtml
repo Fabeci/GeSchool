@@ -1,0 +1,28 @@
+@if (TempData["Success"] is string successMessage)
+{
+    <div class="gs-alert success" role="status">
+        @IconHelper.Render("check-circle")
+        <span>@successMessage</span>
+    </div>
+}
+@if (TempData["Error"] is string errorMessage)
+{
+    <div class="gs-alert danger" role="alert">
+        @IconHelper.Render("x-circle")
+        <span>@errorMessage</span>
+    </div>
+}
+@if (TempData["Warning"] is string warningMessage)
+{
+    <div class="gs-alert warning" role="alert">
+        @IconHelper.Render("alert-triangle")
+        <span>@warningMessage</span>
+    </div>
+}
+@if (TempData["Info"] is string infoMessage)
+{
+    <div class="gs-alert info" role="status">
+        @IconHelper.Render("info")
+        <span>@infoMessage</span>
+    </div>
+}

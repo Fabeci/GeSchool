@@ -1,0 +1,15 @@
+@{
+    ViewData["Title"] = "Accès refusé";
+    Layout = "_LayoutAuth";
+}
+
+<div class="card">
+    <div class="card-body" style="text-align:center;">
+        <div class="icon-wrap" style="margin:0 auto var(--space-4);color:var(--danger);background-color:var(--danger-soft);">
+            @IconHelper.Render("x-circle")
+        </div>
+        <h1 style="font-size:1.125rem;font-weight:700;margin:0 0 var(--space-2);">Accès refusé</h1>
+        <p style="font-size:.875rem;color:var(--text-secondary);margin:0 0 var(--space-4);">Vous n'avez pas les droits nécessaires pour accéder à cette page.</p>
+        <a asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-secondary">Retour au tableau de bord</a>
+    </div>
+</div>

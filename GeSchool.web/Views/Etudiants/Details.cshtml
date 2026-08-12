@@ -1,0 +1,37 @@
+@model EtudiantDto
+
+@{
+    ViewData["Title"] = "Détails de l'étudiant";
+    var initiale = Model.Nom.Length > 0 ? Model.Nom[..1].ToUpperInvariant() : "?";
+}
+
+<div class="card" style="max-width:560px;">
+    <div class="card-header" style="display:flex;align-items:center;gap:var(--space-3);">
+        <span class="gs-avatar">@initiale</span>
+        @Model.Nom @Model.Prenom
+    </div>
+    <div class="card-body">
+        <dl style="margin:0;display:grid;gap:var(--space-4);">
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">N° Étudiant</dt>
+                <dd style="margin:0;">@Model.NumeroEtudiant</dd>
+            </div>
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Email</dt>
+                <dd style="margin:0;">@Model.Email</dd>
+            </div>
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Date de naissance</dt>
+                <dd style="margin:0;">@Model.DateNaissance.ToString("yyyy-MM-dd")</dd>
+            </div>
+        </dl>
+    </div>
+</div>
+
+<div style="margin-top:var(--space-4);display:flex;gap:var(--space-2);">
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+        @IconHelper.Render("pencil")
+        Modifier
+    </a>
+    <a asp-action="Index" class="btn btn-outline-secondary">Retour à la liste</a>
+</div>

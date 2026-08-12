@@ -1,0 +1,75 @@
+@model BulletinDto
+
+@{
+    ViewData["Title"] = "Bulletin";
+    ViewData["Subtitle"] = Model.NomComplet;
+}
+
+<div class="card" style="margin-bottom:var(--space-5);">
+    <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-3);">
+        <div>
+            <div style="font-size:.8125rem;color:var(--text-secondary);">N° Étudiant</div>
+            <div style="font-weight:600;">@Model.NumeroEtudiant</div>
+        </div>
+        <div style="text-align:right;">
+            <div style="font-size:.8125rem;color:var(--text-secondary);">Moyenne générale</div>
+            <div style="font-size:1.5rem;font-weight:700;color:var(--primary);">@Model.MoyenneGenerale.ToString("0.00") / 20</div>
+        </div>
+    </div>
+</div>
+
+@if (Model.Cours.Count == 0)
+{
+    <partial name="_EmptyState" model="@(new EmptyStateViewModel { Icon = "book-open", Title = "Aucun cours", Message = "Cet étudiant n'est inscrit à aucun cours pour le moment." })" />
+}
+else
+{
+    <div style="display:flex;flex-direction:column;gap:var(--space-4);">
+        @foreach (var cours in Model.Cours)
+        {
+            <div class="card">
+                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--space-2);">
+                    <span>@cours.Code - @cours.Intitule <span class="badge-soft neutral">@cours.Credits crédits</span></span>
+                    @if (cours.MoyenneCours.HasValue)
+                    {
+                        <span class="badge-soft @(cours.MoyenneCours.Value >= 10 ? "success" : "danger")">Moyenne : @cours.MoyenneCours.Value.ToString("0.00") / 20</span>
+                    }
+                    else
+                    {
+                        <span class="badge-soft neutral">Aucune note</span>
+                    }
+                </div>
+                <div class="card-body">
+                    @if (cours.Notes.Count == 0)
+                    {
+                        <p class="mb-0" style="color:var(--text-secondary);font-size:.875rem;">Aucune note enregistrée pour ce cours.</p>
+                    }
+                    else
+                    {
+                        <table class="gs-table" style="border:none;">
+                            <thead>
+                                <tr>
+                                    <th>Type d'évaluation</th>
+                                    <th>Valeur</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var note in cours.Notes)
+                                {
+                                    <tr>
+                                        <td>@note.TypeEvaluation</td>
+                                        <td>
+                                            <span class="badge-soft @(note.Valeur >= 10 ? "success" : "danger")">@note.Valeur / 20</span>
+                                        </td>
+                                        <td>@note.DateEvaluation.ToString("yyyy-MM-dd")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}

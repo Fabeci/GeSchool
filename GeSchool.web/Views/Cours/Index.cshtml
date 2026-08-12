@@ -1,0 +1,66 @@
+@model IReadOnlyList<CoursDto>
+@{
+    ViewData["Title"] = "Cours";
+    ViewData["Subtitle"] = "Gérer le catalogue de cours";
+    var departements = (Dictionary<int, DepartementDto>)ViewBag.DepartementsById;
+    var enseignants = (Dictionary<int, EnseignantDto>)ViewBag.EnseignantsById;
+}
+
+<div class="gs-page-header">
+    <div class="gs-search">
+        @IconHelper.Render("search")
+        <input type="search" class="form-control" placeholder="Rechercher un cours..." data-table-search data-table-target="#coursTable" aria-label="Rechercher un cours" />
+    </div>
+    <a asp-action="Create" class="btn btn-primary">
+        @IconHelper.Render("plus")
+        Nouveau cours
+    </a>
+</div>
+
+@if (Model.Count == 0)
+{
+    <partial name="_EmptyState" model="@(new EmptyStateViewModel { Icon = "book-open", Title = "Aucun cours", Message = "Aucun cours n'a encore été créé.", ActionText = "Créer un cours", ActionController = "Cours" })" />
+}
+else
+{
+    <div class="gs-table-wrapper gs-table-responsive">
+        <table class="gs-table" id="coursTable">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Intitulé</th>
+                    <th>Crédits</th>
+                    <th>Semestre</th>
+                    <th>Enseignant</th>
+                    <th>Département</th>
+                    <th class="col-actions"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr data-row>
+                        <td><span class="badge-soft neutral">@item.Code</span></td>
+                        <td>@item.Intitule</td>
+                        <td>@item.Credits</td>
+                        <td>@item.Semestre</td>
+                        <td>@(enseignants.TryGetValue(item.EnseignantId, out var e) ? $"{e.Nom} {e.Prenom}" : "—")</td>
+                        <td>@(departements.TryGetValue(item.DepartementId, out var d) ? d.Nom : "—")</td>
+                        <td class="col-actions">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn-icon" title="Détails" aria-label="Détails de @item.Code">@IconHelper.Render("eye")</a>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn-icon" title="Modifier" aria-label="Modifier @item.Code">@IconHelper.Render("pencil")</a>
+                            <button type="button" class="btn-icon" title="Supprimer" aria-label="Supprimer @item.Code" data-bs-toggle="modal" data-bs-target="#confirmDeleteCours" data-id="@item.Id" data-label="@item.Code - @item.Intitule">
+                                @IconHelper.Render("trash")
+                            </button>
+                        </td>
+                    </tr>
+                }
+                <tr data-search-empty style="display:none;">
+                    <td colspan="7" style="text-align:center;color:var(--text-secondary);padding:var(--space-5);">Aucun résultat pour cette recherche.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+}
+
+<partial name="_ConfirmDeleteModal" model="@(new ConfirmDeleteModalViewModel { Id = "confirmDeleteCours", Title = "Supprimer ce cours ?", Message = "Cette action est irréversible.", Controller = "Cours" })" />

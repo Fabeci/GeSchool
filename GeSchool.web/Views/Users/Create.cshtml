@@ -1,0 +1,73 @@
+@model GeSchool.web.ViewModels.CreateUserViewModel
+
+@{
+    ViewData["Title"] = "Créer un utilisateur";
+}
+
+<div class="card" style="max-width:640px;">
+    <div class="card-body">
+        <form asp-controller="Users" asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom:var(--space-4);"></div>
+
+            <div class="gs-form-section">
+                <h2>Identité</h2>
+                <div class="form-group">
+                    <label asp-for="Nom" class="form-label"></label>
+                    <input asp-for="Nom" class="form-control" />
+                    <span asp-validation-for="Nom" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Prenom" class="form-label"></label>
+                    <input asp-for="Prenom" class="form-control" />
+                    <span asp-validation-for="Prenom" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" autocomplete="username" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="gs-form-section">
+                <h2>Sécurité</h2>
+                <div class="form-group">
+                    <label asp-for="Password" class="form-label"></label>
+                    <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="ConfirmPassword" class="form-label"></label>
+                    <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="gs-form-section">
+                <h2>Rôle et accès</h2>
+                <div class="form-group">
+                    <label asp-for="Role" class="form-label"></label>
+                    <select asp-for="Role" class="form-select" asp-items="@(new SelectList(Model.AvailableRoles))">
+                        <option value="">-- Choisir un rôle --</option>
+                    </select>
+                    <span asp-validation-for="Role" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="EtudiantId" class="form-label"></label>
+                    <select asp-for="EtudiantId" class="form-select" asp-items="Model.AvailableEtudiants">
+                        <option value="">-- Aucun --</option>
+                    </select>
+                    <span asp-validation-for="EtudiantId" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:var(--space-2);">
+                <button type="submit" class="btn btn-primary">Créer l'utilisateur</button>
+                <a asp-action="Index" class="btn btn-link">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

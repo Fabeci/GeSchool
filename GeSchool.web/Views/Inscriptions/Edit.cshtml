@@ -1,0 +1,41 @@
+@model UpdateInscriptionDto
+
+@{
+    ViewData["Title"] = "Modifier l'inscription";
+}
+
+<div class="card" style="max-width:560px;">
+    <div class="card-body">
+        <form asp-controller="Inscriptions" asp-action="Edit" asp-route-id="@Model.Id" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom:var(--space-4);"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="form-group">
+                <label asp-for="EtudiantId" class="form-label"></label>
+                <select asp-for="EtudiantId" class="form-select" asp-items="@(ViewBag.EtudiantOptions as SelectList)">
+                    <option value="">-- Choisir un étudiant --</option>
+                </select>
+                <span asp-validation-for="EtudiantId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CoursId" class="form-label"></label>
+                <select asp-for="CoursId" class="form-select" asp-items="@(ViewBag.CoursOptions as SelectList)">
+                    <option value="">-- Choisir un cours --</option>
+                </select>
+                <span asp-validation-for="CoursId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DateInscription" class="form-label"></label>
+                <input asp-for="DateInscription" type="date" class="form-control" />
+                <span asp-validation-for="DateInscription" class="text-danger"></span>
+            </div>
+            <div style="display:flex;gap:var(--space-2);margin-top:var(--space-5);">
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                <a asp-action="Index" class="btn btn-link">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

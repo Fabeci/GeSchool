@@ -1,0 +1,38 @@
+@model NoteDto
+@{
+    ViewData["Title"] = "Détails de la note";
+    var labels = (Dictionary<int, string>)ViewBag.InscriptionLabels;
+}
+
+<div class="card" style="max-width:560px;">
+    <div class="card-body">
+        <dl style="margin:0;display:grid;gap:var(--space-4);">
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Inscription</dt>
+                <dd style="margin:0;">@(labels.TryGetValue(Model.InscriptionId, out var label) ? label : Model.InscriptionId.ToString())</dd>
+            </div>
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Valeur</dt>
+                <dd style="margin:0;">
+                    <span class="badge-soft @(Model.Valeur >= 10 ? "success" : "danger")">@Model.Valeur / 20</span>
+                </dd>
+            </div>
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Type d'évaluation</dt>
+                <dd style="margin:0;">@Model.TypeEvaluation</dd>
+            </div>
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Date</dt>
+                <dd style="margin:0;">@Model.DateEvaluation.ToString("yyyy-MM-dd")</dd>
+            </div>
+        </dl>
+    </div>
+</div>
+
+<div style="margin-top:var(--space-4);display:flex;gap:var(--space-2);">
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+        @IconHelper.Render("pencil")
+        Modifier
+    </a>
+    <a asp-action="Index" class="btn btn-outline-secondary">Retour à la liste</a>
+</div>

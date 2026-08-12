@@ -1,0 +1,29 @@
+@model InscriptionDto
+@{
+    ViewData["Title"] = "Supprimer une inscription";
+    var etudiants = (Dictionary<int, EtudiantDto>)ViewBag.Etudiants;
+    var cours = (Dictionary<int, CoursDto>)ViewBag.Cours;
+}
+
+<div class="card" style="max-width:560px;">
+    <div class="card-body">
+        <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom:var(--space-4);"></div>
+        <p>Confirmer la suppression de l'inscription suivante ? Les notes associées seront également supprimées.</p>
+        <dl style="margin:0 0 var(--space-4);">
+            <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Étudiant</dt>
+            <dd>@(etudiants.TryGetValue(Model.EtudiantId, out var e) ? $"{e.NumeroEtudiant} - {e.Nom} {e.Prenom}" : Model.EtudiantId.ToString())</dd>
+            <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Cours</dt>
+            <dd>@(cours.TryGetValue(Model.CoursId, out var c) ? $"{c.Code} - {c.Intitule}" : Model.CoursId.ToString())</dd>
+        </dl>
+        <form asp-controller="Inscriptions" asp-action="Delete" method="post">
+            <input type="hidden" asp-for="Id" />
+            <div style="display:flex;gap:var(--space-2);">
+                <button type="submit" class="btn btn-danger">
+                    @IconHelper.Render("trash")
+                    Supprimer
+                </button>
+                <a asp-action="Index" class="btn btn-link">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>

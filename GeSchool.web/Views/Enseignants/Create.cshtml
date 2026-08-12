@@ -1,0 +1,48 @@
+@model CreateEnseignantDto
+
+@{
+    ViewData["Title"] = "Créer un enseignant";
+}
+
+<div class="card" style="max-width:560px;">
+    <div class="card-body">
+        <form asp-controller="Enseignants" asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom:var(--space-4);"></div>
+            <div class="form-group">
+                <label asp-for="Nom" class="form-label"></label>
+                <input asp-for="Nom" class="form-control" />
+                <span asp-validation-for="Nom" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Prenom" class="form-label"></label>
+                <input asp-for="Prenom" class="form-control" />
+                <span asp-validation-for="Prenom" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Specialite" class="form-label"></label>
+                <input asp-for="Specialite" class="form-control" />
+                <span asp-validation-for="Specialite" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DepartementId" class="form-label"></label>
+                <select asp-for="DepartementId" class="form-select" asp-items="@(ViewBag.Departements as SelectList)">
+                    <option value="">-- Choisir un département --</option>
+                </select>
+                <span asp-validation-for="DepartementId" class="text-danger"></span>
+            </div>
+            <div style="display:flex;gap:var(--space-2);margin-top:var(--space-5);">
+                <button type="submit" class="btn btn-primary">Créer l'enseignant</button>
+                <a asp-action="Index" class="btn btn-link">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

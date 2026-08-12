@@ -1,0 +1,75 @@
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+
+    bool IsActive(string controller) => string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase);
+    string ActiveClass(string controller) => IsActive(controller) ? "gs-sidebar-link active" : "gs-sidebar-link";
+}
+
+<aside class="gs-sidebar" id="gsSidebar">
+    <div class="gs-sidebar-brand">
+        @IconHelper.Render("graduation-cap")
+        <span>GeSchool</span>
+    </div>
+
+    <nav class="gs-sidebar-nav">
+        <a asp-controller="Dashboard" asp-action="Index" class="@ActiveClass("Dashboard")">
+            @IconHelper.Render("dashboard")
+            <span>Tableau de bord</span>
+        </a>
+
+        @if (User.IsInRole("Administrateur"))
+        {
+            <div class="gs-sidebar-group-title">Scolarité</div>
+            <a asp-controller="Etudiants" asp-action="Index" class="@ActiveClass("Etudiants")">
+                @IconHelper.Render("graduation-cap")
+                <span>Étudiants</span>
+            </a>
+            <a asp-controller="Enseignants" asp-action="Index" class="@ActiveClass("Enseignants")">
+                @IconHelper.Render("users")
+                <span>Enseignants</span>
+            </a>
+            <a asp-controller="Cours" asp-action="Index" class="@ActiveClass("Cours")">
+                @IconHelper.Render("book-open")
+                <span>Cours</span>
+            </a>
+            <a asp-controller="Inscriptions" asp-action="Index" class="@ActiveClass("Inscriptions")">
+                @IconHelper.Render("clipboard-list")
+                <span>Inscriptions</span>
+            </a>
+            <a asp-controller="Notes" asp-action="Index" class="@ActiveClass("Notes")">
+                @IconHelper.Render("file-text")
+                <span>Notes</span>
+            </a>
+            <a asp-controller="Bulletin" asp-action="Index" class="@ActiveClass("Bulletin")">
+                @IconHelper.Render("award")
+                <span>Bulletins</span>
+            </a>
+
+            <div class="gs-sidebar-group-title">Administration</div>
+            <a asp-controller="Departements" asp-action="Index" class="@ActiveClass("Departements")">
+                @IconHelper.Render("building")
+                <span>Départements</span>
+            </a>
+            <a asp-controller="Users" asp-action="Index" class="@ActiveClass("Users")">
+                @IconHelper.Render("users")
+                <span>Utilisateurs</span>
+            </a>
+        }
+
+        @if (User.IsInRole("Etudiant"))
+        {
+            <div class="gs-sidebar-group-title">Mon espace</div>
+            <a asp-controller="Bulletin" asp-action="Mine" class="@ActiveClass("Bulletin")">
+                @IconHelper.Render("award")
+                <span>Mon bulletin</span>
+            </a>
+        }
+    </nav>
+
+    <div class="gs-sidebar-footer">
+        <a asp-controller="Home" asp-action="Privacy" class="gs-sidebar-link">
+            @IconHelper.Render("info")
+            <span>À propos</span>
+        </a>
+    </div>
+</aside>

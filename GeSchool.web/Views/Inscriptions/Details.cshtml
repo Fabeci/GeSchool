@@ -1,0 +1,33 @@
+@model InscriptionDto
+@{
+    ViewData["Title"] = "Détails de l'inscription";
+    var etudiants = (Dictionary<int, EtudiantDto>)ViewBag.Etudiants;
+    var cours = (Dictionary<int, CoursDto>)ViewBag.Cours;
+}
+
+<div class="card" style="max-width:560px;">
+    <div class="card-body">
+        <dl style="margin:0;display:grid;gap:var(--space-4);">
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Étudiant</dt>
+                <dd style="margin:0;">@(etudiants.TryGetValue(Model.EtudiantId, out var e) ? $"{e.NumeroEtudiant} - {e.Nom} {e.Prenom}" : Model.EtudiantId.ToString())</dd>
+            </div>
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Cours</dt>
+                <dd style="margin:0;">@(cours.TryGetValue(Model.CoursId, out var c) ? $"{c.Code} - {c.Intitule}" : Model.CoursId.ToString())</dd>
+            </div>
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Date d'inscription</dt>
+                <dd style="margin:0;">@Model.DateInscription.ToString("yyyy-MM-dd")</dd>
+            </div>
+        </dl>
+    </div>
+</div>
+
+<div style="margin-top:var(--space-4);display:flex;gap:var(--space-2);">
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+        @IconHelper.Render("pencil")
+        Modifier
+    </a>
+    <a asp-action="Index" class="btn btn-outline-secondary">Retour à la liste</a>
+</div>

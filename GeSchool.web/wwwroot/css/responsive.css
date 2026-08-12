@@ -1,0 +1,62 @@
+@media (max-width: 991.98px) {
+  .gs-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1050;
+    transform: translateX(-100%);
+    transition: transform var(--transition-base);
+  }
+
+  .gs-sidebar.show {
+    transform: translateX(0);
+  }
+
+  .gs-content {
+    padding: var(--space-4);
+  }
+
+  .gs-topbar {
+    padding: 0 var(--space-4);
+  }
+
+  .gs-sidebar-toggle {
+    display: inline-flex !important;
+  }
+}
+
+.gs-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 17, 23, 0.45);
+  z-index: 1040;
+}
+
+.gs-sidebar-backdrop.show {
+  display: block;
+}
+
+@media (min-width: 992px) {
+  .gs-sidebar-toggle {
+    display: none !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .gs-page-header {
+    align-items: stretch;
+  }
+
+  .gs-search {
+    max-width: none;
+  }
+
+  .kpi-card .kpi-value {
+    font-size: 1.5rem;
+  }
+}
+
+.gs-table-responsive {
+  overflow-x: auto;
+}

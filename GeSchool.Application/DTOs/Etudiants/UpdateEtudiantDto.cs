@@ -1,0 +1,12 @@
+namespace GeSchool.Application.DTOs.Etudiants;
+
+public class UpdateEtudiantDto
+{
+    public int Id { get; set; }
+    public string NumeroEtudiant { get; set; } = string.Empty;
+    public string Nom { get; set; } = string.Empty;
+    public string Prenom { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public DateTime DateNaissance { get; set; }
+    public int DepartementId { get; set; }
+}
