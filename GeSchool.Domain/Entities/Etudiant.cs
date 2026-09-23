@@ -1,4 +1,5 @@
 using GeSchool.Domain.Common;
+using GeSchool.Domain.Enums;
 
 namespace GeSchool.Domain.Entities;
 
@@ -9,6 +10,7 @@ public class Etudiant : BaseEntity
     public string Prenom { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public DateTime DateNaissance { get; set; }
+    public Sexe? Sexe { get; set; }
 
     public int DepartementId { get; set; }
     public Departement Departement { get; set; } = null!;

@@ -9,92 +9,21 @@
     Bonjour <strong style="color:var(--text-primary);">@User.Identity!.Name</strong> 👋 — voici un aperçu de votre établissement.
 </p>
 
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--space-4);margin-bottom:var(--space-6);">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--space-4);">
     <div class="kpi-card">
         <div class="kpi-label">Étudiants</div>
         <div class="kpi-value">@Model.EtudiantsCount</div>
-        <span class="kpi-trend up">@IconHelper.Render("dashboard") +8.2%</span>
     </div>
     <div class="kpi-card">
         <div class="kpi-label">Enseignants</div>
         <div class="kpi-value">@Model.EnseignantsCount</div>
-        <span class="kpi-trend up">@IconHelper.Render("dashboard") +3.1%</span>
     </div>
     <div class="kpi-card">
         <div class="kpi-label">Cours</div>
         <div class="kpi-value">@Model.CoursCount</div>
-        <span class="kpi-trend up">@IconHelper.Render("dashboard") +5.4%</span>
     </div>
     <div class="kpi-card">
         <div class="kpi-label">Inscriptions</div>
         <div class="kpi-value">@Model.InscriptionsCount</div>
-        <span class="kpi-trend up">@IconHelper.Render("dashboard") +12.4%</span>
     </div>
 </div>
-
-<p style="font-size:.75rem;color:var(--text-muted);margin-bottom:var(--space-3);">
-    Les compteurs ci-dessus sont réels. Les tendances (%) et les sections ci-dessous sont des données d'exemple à titre d'illustration — aucun historique n'est encore suivi par l'application.
-</p>
-
-<div style="display:grid;grid-template-columns:2fr 1fr;gap:var(--space-4);" class="gs-dashboard-grid">
-    <div class="card">
-        <div class="card-header">Activité récente (exemple)</div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:var(--space-3);">
-            <div style="display:flex;gap:var(--space-3);align-items:flex-start;">
-                <span class="badge-soft success">@IconHelper.Render("check-circle")</span>
-                <div>
-                    <div style="font-size:.875rem;">Nouvelle inscription — <strong>Fatou Ndiaye</strong> à <strong>Bases de données</strong></div>
-                    <div style="font-size:.75rem;color:var(--text-muted);">Il y a 2 heures</div>
-                </div>
-            </div>
-            <div style="display:flex;gap:var(--space-3);align-items:flex-start;">
-                <span class="badge-soft info">@IconHelper.Render("file-text")</span>
-                <div>
-                    <div style="font-size:.875rem;">Note saisie — <strong>Algorithmique</strong>, Examen</div>
-                    <div style="font-size:.75rem;color:var(--text-muted);">Il y a 5 heures</div>
-                </div>
-            </div>
-            <div style="display:flex;gap:var(--space-3);align-items:flex-start;">
-                <span class="badge-soft primary">@IconHelper.Render("users")</span>
-                <div>
-                    <div style="font-size:.875rem;">Nouvel enseignant — <strong>Moussa Diop</strong></div>
-                    <div style="font-size:.75rem;color:var(--text-muted);">Hier</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-header">Cours populaires (exemple)</div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:var(--space-4);">
-            @{
-                var populaires = new (string Nom, int Pourcentage)[]
-                {
-                    ("Algorithmique", 92),
-                    ("Bases de données", 78),
-                    ("Réseaux", 65)
-                };
-            }
-            @foreach (var (nom, pourcentage) in populaires)
-            {
-                <div>
-                    <div style="display:flex;justify-content:space-between;font-size:.8125rem;margin-bottom:.35rem;">
-                        <span>@nom</span>
-                        <span style="color:var(--text-secondary);">@pourcentage%</span>
-                    </div>
-                    <div style="height:6px;border-radius:999px;background-color:var(--border);overflow:hidden;">
-                        <div style="height:100%;width:@(pourcentage)%;background-color:var(--primary);"></div>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
-</div>
-
-<style>
-    @@media (max-width: 767.98px) {
-        .gs-dashboard-grid {
-            grid-template-columns: 1fr !important;
-        }
-    }
-</style>

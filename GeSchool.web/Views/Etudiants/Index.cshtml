@@ -3,6 +3,11 @@
 @{
     ViewData["Title"] = "Étudiants";
     ViewData["Subtitle"] = "Gérer les étudiants inscrits";
+    var sexeOptions = new SelectList(new[]
+    {
+        new { Value = nameof(Sexe.Masculin), Text = "Masculin" },
+        new { Value = nameof(Sexe.Feminin), Text = "Féminin" }
+    }, "Value", "Text");
 }
 
 <div class="gs-page-header">
@@ -58,10 +63,10 @@ else
                             <a asp-action="Details" asp-route-id="@item.Id" class="btn-icon" title="Détails" aria-label="Détails de @item.Nom">@IconHelper.Render("eye")</a>
                             @if (User.IsInRole("Administrateur"))
                             {
-                                <button type="button" class="btn-icon" title="Modifier" aria-label="Modifier @item.Nom" data-bs-toggle="modal" data-bs-target="#editEtudiantModal" data-edit="@System.Text.Json.JsonSerializer.Serialize(new { item.Id, item.NumeroEtudiant, item.Nom, item.Prenom, item.Email, DateNaissance = item.DateNaissance.ToString("yyyy-MM-dd"), item.DepartementId, url = Url.Action("Edit", new { id = item.Id }) })">
+                                <button type="button" class="btn-icon" title="Modifier" aria-label="Modifier @item.Nom" data-bs-toggle="modal" data-bs-target="#editEtudiantModal" data-edit="@System.Text.Json.JsonSerializer.Serialize(new { item.Id, item.NumeroEtudiant, item.Nom, item.Prenom, item.Email, DateNaissance = item.DateNaissance.ToString("yyyy-MM-dd"), Sexe = item.Sexe.HasValue ? item.Sexe.Value.ToString() : "", item.DepartementId, url = Url.Action("Edit", new { id = item.Id }) })">
                                     @IconHelper.Render("pencil")
                                 </button>
-                                <button type="button" class="btn-icon" title="Supprimer" aria-label="Supprimer @item.Nom" data-bs-toggle="modal" data-bs-target="#confirmDeleteEtudiant" data-id="@item.Id" data-label="@item.Nom @item.Prenom" data-restore="@System.Text.Json.JsonSerializer.Serialize(new { item.NumeroEtudiant, item.Nom, item.Prenom, item.Email, DateNaissance = item.DateNaissance.ToString("yyyy-MM-dd"), item.DepartementId })">
+                                <button type="button" class="btn-icon" title="Supprimer" aria-label="Supprimer @item.Nom" data-bs-toggle="modal" data-bs-target="#confirmDeleteEtudiant" data-id="@item.Id" data-label="@item.Nom @item.Prenom" data-restore="@System.Text.Json.JsonSerializer.Serialize(new { item.NumeroEtudiant, item.Nom, item.Prenom, item.Email, DateNaissance = item.DateNaissance.ToString("yyyy-MM-dd"), Sexe = item.Sexe.HasValue ? item.Sexe.Value.ToString() : "", item.DepartementId })">
                                     @IconHelper.Render("trash")
                                 </button>
                             }
@@ -112,6 +117,12 @@ else
                             <input type="date" name="DateNaissance" class="form-control" required />
                         </div>
                         <div class="form-group">
+                            <label class="form-label">Sexe</label>
+                            <select name="Sexe" class="form-select" asp-items="sexeOptions">
+                                <option value="">-- Non précisé --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
                             <label class="form-label">Département</label>
                             <select name="DepartementId" class="form-select" asp-items="@(ViewBag.Departements as SelectList)">
                                 <option value="">-- Choisir un département --</option>
@@ -157,6 +168,12 @@ else
                         <div class="form-group">
                             <label class="form-label">Date de naissance</label>
                             <input type="date" name="DateNaissance" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sexe</label>
+                            <select name="Sexe" class="form-select" asp-items="sexeOptions">
+                                <option value="">-- Non précisé --</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Département</label>

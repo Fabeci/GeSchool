@@ -11,6 +11,7 @@ public class BulletinService : IBulletinService
     private readonly IInscriptionRepository _inscriptionRepository;
     private readonly ICoursRepository _coursRepository;
     private readonly INoteRepository _noteRepository;
+    private readonly IDepartementRepository _departementRepository;
     private readonly IMapper _mapper;
 
     public BulletinService(
@@ -18,12 +19,14 @@ public class BulletinService : IBulletinService
         IInscriptionRepository inscriptionRepository,
         ICoursRepository coursRepository,
         INoteRepository noteRepository,
+        IDepartementRepository departementRepository,
         IMapper mapper)
     {
         _etudiantRepository = etudiantRepository;
         _inscriptionRepository = inscriptionRepository;
         _coursRepository = coursRepository;
         _noteRepository = noteRepository;
+        _departementRepository = departementRepository;
         _mapper = mapper;
     }
 
@@ -31,6 +34,8 @@ public class BulletinService : IBulletinService
     {
         var etudiant = await _etudiantRepository.GetByIdAsync(etudiantId)
             ?? throw new KeyNotFoundException($"Aucun étudiant trouvé avec l'id {etudiantId}.");
+
+        var departement = await _departementRepository.GetByIdAsync(etudiant.DepartementId);
 
         var inscriptions = await _inscriptionRepository.GetByEtudiantIdAsync(etudiantId);
         var coursParId = (await _coursRepository.GetAllAsync()).ToDictionary(c => c.Id);
@@ -67,7 +72,13 @@ public class BulletinService : IBulletinService
         {
             EtudiantId = etudiant.Id,
             NumeroEtudiant = etudiant.NumeroEtudiant,
+            Nom = etudiant.Nom,
+            Prenom = etudiant.Prenom,
             NomComplet = $"{etudiant.Nom} {etudiant.Prenom}",
+            Email = etudiant.Email,
+            DateNaissance = etudiant.DateNaissance,
+            Sexe = etudiant.Sexe,
+            Departement = departement?.Nom ?? "—",
             Cours = bulletinCours,
             MoyenneGenerale = moyenneGenerale
         };

@@ -24,6 +24,10 @@
                 <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Date de naissance</dt>
                 <dd style="margin:0;">@Model.DateNaissance.ToString("yyyy-MM-dd")</dd>
             </div>
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Sexe</dt>
+                <dd style="margin:0;">@(Model.Sexe switch { Sexe.Masculin => "Masculin", Sexe.Feminin => "Féminin", _ => "—" })</dd>
+            </div>
         </dl>
     </div>
 </div>

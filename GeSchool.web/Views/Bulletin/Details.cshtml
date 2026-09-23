@@ -7,6 +7,13 @@
     {
         ViewData["BreadcrumbParent"] = ("Bulletins", Url.Action("Index", "Bulletin") ?? "/Bulletin");
     }
+
+    string SexeLabel(Sexe? sexe) => sexe switch
+    {
+        Sexe.Masculin => "Masculin",
+        Sexe.Feminin => "Féminin",
+        _ => "—"
+    };
 }
 
 <div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-3);" data-no-print>
@@ -17,11 +24,37 @@
 </div>
 
 <div class="card" style="margin-bottom:var(--space-5);">
-    <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-3);">
-        <div>
-            <div style="font-size:.8125rem;color:var(--text-secondary);">N° Étudiant</div>
-            <div style="font-weight:600;">@Model.NumeroEtudiant</div>
-        </div>
+    <div class="card-body" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:var(--space-5);">
+        <dl style="margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--space-4);flex:1;min-width:280px;">
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Nom</dt>
+                <dd style="margin:0;font-weight:600;">@Model.Nom</dd>
+            </div>
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Prénom</dt>
+                <dd style="margin:0;font-weight:600;">@Model.Prenom</dd>
+            </div>
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Sexe</dt>
+                <dd style="margin:0;">@SexeLabel(Model.Sexe)</dd>
+            </div>
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">N° Étudiant</dt>
+                <dd style="margin:0;">@Model.NumeroEtudiant</dd>
+            </div>
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Date de naissance</dt>
+                <dd style="margin:0;">@Model.DateNaissance.ToString("yyyy-MM-dd")</dd>
+            </div>
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Département</dt>
+                <dd style="margin:0;">@Model.Departement</dd>
+            </div>
+            <div>
+                <dt style="font-size:.75rem;color:var(--text-secondary);text-transform:uppercase;">Email</dt>
+                <dd style="margin:0;">@Model.Email</dd>
+            </div>
+        </dl>
         <div style="text-align:right;">
             <div style="font-size:.8125rem;color:var(--text-secondary);">Moyenne générale</div>
             <div style="font-size:1.5rem;font-weight:700;color:var(--primary);">@Model.MoyenneGenerale.ToString("0.00") / 20</div>
