@@ -1,4 +1,4 @@
-@model IReadOnlyList<DepartementDto>
+@model PagedList<DepartementDto>
 
 @{
     ViewData["Title"] = "Départements";
@@ -10,13 +10,17 @@
         @IconHelper.Render("search")
         <input type="search" class="form-control" placeholder="Rechercher un département..." data-table-search data-table-target="#departementsTable" aria-label="Rechercher un département" />
     </div>
-    <a asp-action="Create" class="btn btn-primary">
+    <button type="button" class="btn btn-outline-secondary" data-csv-export data-csv-target="#departementsTable" data-csv-filename="departements.csv">
+        @IconHelper.Render("download")
+        Exporter CSV
+    </button>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createDepartementModal">
         @IconHelper.Render("plus")
         Nouveau département
-    </a>
+    </button>
 </div>
 
-@if (Model.Count == 0)
+@if (Model.TotalCount == 0)
 {
     <partial name="_EmptyState" model="@(new EmptyStateViewModel { Icon = "building", Title = "Aucun département", Message = "Aucun département n'a encore été créé.", ActionText = "Créer un département", ActionController = "Departements" })" />
 }
@@ -26,21 +30,23 @@ else
         <table class="gs-table" id="departementsTable">
             <thead>
                 <tr>
-                    <th>Nom</th>
-                    <th>Description</th>
+                    <th><partial name="_SortLink" model="@(new SortLinkViewModel { Text = "Nom", SortKey = "Nom", CurrentSort = ViewBag.SortBy, CurrentDir = ViewBag.SortDir })" /></th>
+                    <th><partial name="_SortLink" model="@(new SortLinkViewModel { Text = "Description", SortKey = "Description", CurrentSort = ViewBag.SortBy, CurrentDir = ViewBag.SortDir })" /></th>
                     <th class="col-actions"></th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model)
+                @foreach (var item in Model.Items)
                 {
                     <tr data-row>
                         <td>@item.Nom</td>
                         <td>@item.Description</td>
                         <td class="col-actions">
                             <a asp-action="Details" asp-route-id="@item.Id" class="btn-icon" title="Détails" aria-label="Détails du département @item.Nom">@IconHelper.Render("eye")</a>
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn-icon" title="Modifier" aria-label="Modifier @item.Nom">@IconHelper.Render("pencil")</a>
-                            <button type="button" class="btn-icon" title="Supprimer" aria-label="Supprimer @item.Nom" data-bs-toggle="modal" data-bs-target="#confirmDeleteDepartement" data-id="@item.Id" data-label="@item.Nom">
+                            <button type="button" class="btn-icon" title="Modifier" aria-label="Modifier @item.Nom" data-bs-toggle="modal" data-bs-target="#editDepartementModal" data-edit="@System.Text.Json.JsonSerializer.Serialize(new { item.Id, item.Nom, item.Description, url = Url.Action("Edit", new { id = item.Id }) })">
+                                @IconHelper.Render("pencil")
+                            </button>
+                            <button type="button" class="btn-icon" title="Supprimer" aria-label="Supprimer @item.Nom" data-bs-toggle="modal" data-bs-target="#confirmDeleteDepartement" data-id="@item.Id" data-label="@item.Nom" data-restore="@System.Text.Json.JsonSerializer.Serialize(new { item.Nom, item.Description })">
                                 @IconHelper.Render("trash")
                             </button>
                         </td>
@@ -51,7 +57,65 @@ else
                 </tr>
             </tbody>
         </table>
+        <partial name="_Pagination" model="Model" />
     </div>
 }
 
 <partial name="_ConfirmDeleteModal" model="@(new ConfirmDeleteModalViewModel { Id = "confirmDeleteDepartement", Title = "Supprimer ce département ?", Message = "Cette action est irréversible.", Controller = "Departements" })" />
+
+<div class="modal fade" id="createDepartementModal" tabindex="-1" aria-labelledby="createDepartementModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-controller="Departements" asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="createDepartementModalLabel">Nouveau département</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="createDepartementNom">Nom</label>
+                        <input type="text" name="Nom" id="createDepartementNom" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="createDepartementDescription">Description</label>
+                        <textarea name="Description" id="createDepartementDescription" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer le département</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editDepartementModal" tabindex="-1" aria-labelledby="editDepartementModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-controller="Departements" asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="editDepartementModalLabel">Modifier le département</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="Id" />
+                    <div class="form-group">
+                        <label class="form-label" for="editDepartementNom">Nom</label>
+                        <input type="text" name="Nom" id="editDepartementNom" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editDepartementDescription">Description</label>
+                        <textarea name="Description" id="editDepartementDescription" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -3,7 +3,18 @@
 @{
     ViewData["Title"] = "Bulletin";
     ViewData["Subtitle"] = Model.NomComplet;
+    if (User.IsInRole("Administrateur"))
+    {
+        ViewData["BreadcrumbParent"] = ("Bulletins", Url.Action("Index", "Bulletin") ?? "/Bulletin");
+    }
 }
+
+<div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-3);" data-no-print>
+    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+        @IconHelper.Render("printer")
+        Imprimer
+    </button>
+</div>
 
 <div class="card" style="margin-bottom:var(--space-5);">
     <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-3);">

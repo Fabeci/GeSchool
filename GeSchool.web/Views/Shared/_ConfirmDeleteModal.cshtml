@@ -3,7 +3,7 @@
 <div class="modal fade" id="@Model.Id" tabindex="-1" aria-labelledby="@(Model.Id)Label" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form asp-controller="@Model.Controller" asp-action="@Model.Action" method="post">
+            <form asp-controller="@Model.Controller" asp-action="@Model.Action" method="post" data-delete-form>
                 @Html.AntiForgeryToken()
                 <div class="modal-header">
                     <h2 class="modal-title h5" id="@(Model.Id)Label">@Model.Title</h2>

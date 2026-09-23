@@ -2,6 +2,8 @@ using FluentValidation;
 using GeSchool.Application.DTOs.Departements;
 using GeSchool.Application.DTOs.Enseignants;
 using GeSchool.Application.Interfaces.Services;
+using GeSchool.web.Extensions;
+using GeSchool.web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -29,10 +31,22 @@ public class EnseignantsController : Controller
         _updateValidator = updateValidator;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int page = 1, string sortBy = "Nom", string sortDir = "asc")
     {
         var enseignants = await _enseignantService.GetAllAsync();
-        return View(enseignants);
+
+        var sorted = sortBy switch
+        {
+            "Prenom" => SortHelper.Apply(enseignants, e => e.Prenom, sortDir),
+            "Email" => SortHelper.Apply(enseignants, e => e.Email, sortDir),
+            "Specialite" => SortHelper.Apply(enseignants, e => e.Specialite, sortDir),
+            _ => SortHelper.Apply(enseignants, e => e.Nom, sortDir)
+        };
+
+        ViewBag.SortBy = sortBy;
+        ViewBag.SortDir = sortDir;
+        await PopulateDepartementsAsync();
+        return View(PagedList<EnseignantDto>.Create(sorted, page));
     }
 
     public async Task<IActionResult> Details(int id)
@@ -43,6 +57,7 @@ public class EnseignantsController : Controller
             return NotFound();
         }
 
+        ViewData["BreadcrumbParent"] = ("Enseignants", Url.Action(nameof(Index)) ?? "/Enseignants");
         return View(enseignant);
     }
 

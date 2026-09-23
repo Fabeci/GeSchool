@@ -1,0 +1,12 @@
+@model SortLinkViewModel
+@{
+    var isActive = string.Equals(Model.CurrentSort, Model.SortKey, StringComparison.OrdinalIgnoreCase);
+    var nextDir = isActive && Model.CurrentDir == "asc" ? "desc" : "asc";
+}
+<a href="?sortBy=@Model.SortKey&amp;sortDir=@nextDir" class="gs-sort-link@(isActive ? " active" : "")">
+    <span>@Model.Text</span>
+    @if (isActive)
+    {
+        @IconHelper.Render(Model.CurrentDir == "asc" ? "chevron-up" : "chevron-down", "gs-sort-icon")
+    }
+</a>

@@ -15,6 +15,14 @@
     </div>
 
     <div class="gs-topbar-actions">
+        @if (SignInManager.IsSignedIn(User))
+        {
+            <div class="gs-quicknav">
+                @IconHelper.Render("search")
+                <input type="search" class="form-control form-control-sm" id="gsQuickNavInput" placeholder="Aller à..." autocomplete="off" aria-label="Recherche rapide" />
+                <div class="gs-quicknav-results" id="gsQuickNavResults"></div>
+            </div>
+        }
         <div class="dropdown">
             <button class="btn-icon" type="button" id="gsThemeToggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Changer de thème" title="Thème">
                 @IconHelper.Render("sun")

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace GeSchool.Application.DTOs.CoursDtos;
 
 public class UpdateCoursDto
@@ -7,6 +9,10 @@ public class UpdateCoursDto
     public string Intitule { get; set; } = string.Empty;
     public int Credits { get; set; }
     public string Semestre { get; set; } = string.Empty;
+
+    [Display(Name = "Département")]
     public int DepartementId { get; set; }
+
+    [Display(Name = "Enseignant")]
     public int EnseignantId { get; set; }
 }

@@ -1,4 +1,4 @@
-@model IReadOnlyList<UserListItemViewModel>
+@model PagedList<UserListItemViewModel>
 
 @{
     ViewData["Title"] = "Utilisateurs";
@@ -18,13 +18,17 @@
         @IconHelper.Render("search")
         <input type="search" class="form-control" placeholder="Rechercher un utilisateur..." data-table-search data-table-target="#usersTable" aria-label="Rechercher un utilisateur" />
     </div>
-    <a asp-action="Create" class="btn btn-primary">
+    <button type="button" class="btn btn-outline-secondary" data-csv-export data-csv-target="#usersTable" data-csv-filename="utilisateurs.csv">
+        @IconHelper.Render("download")
+        Exporter CSV
+    </button>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
         @IconHelper.Render("plus")
         Créer un utilisateur
-    </a>
+    </button>
 </div>
 
-@if (Model.Count == 0)
+@if (Model.TotalCount == 0)
 {
     <partial name="_EmptyState" model="@(new EmptyStateViewModel { Icon = "users", Title = "Aucun utilisateur", Message = "Aucun compte utilisateur trouvé.", ActionText = "Créer un utilisateur", ActionController = "Users" })" />
 }
@@ -34,14 +38,14 @@ else
         <table class="gs-table" id="usersTable">
             <thead>
                 <tr>
-                    <th>Utilisateur</th>
-                    <th>Email</th>
+                    <th><partial name="_SortLink" model="@(new SortLinkViewModel { Text = "Utilisateur", SortKey = "Nom", CurrentSort = ViewBag.SortBy, CurrentDir = ViewBag.SortDir })" /></th>
+                    <th><partial name="_SortLink" model="@(new SortLinkViewModel { Text = "Email", SortKey = "Email", CurrentSort = ViewBag.SortBy, CurrentDir = ViewBag.SortDir })" /></th>
                     <th>Rôle(s)</th>
                     <th class="col-actions"></th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model)
+                @foreach (var item in Model.Items)
                 {
                     var initiale = item.Nom.Length > 0 ? item.Nom[..1].ToUpperInvariant() : "?";
                     <tr data-row>
@@ -70,7 +74,66 @@ else
                 </tr>
             </tbody>
         </table>
+        <partial name="_Pagination" model="Model" />
     </div>
 }
 
 <partial name="_ConfirmDeleteModal" model="@(new ConfirmDeleteModalViewModel { Id = "confirmDeleteUser", Title = "Supprimer ce compte ?", Message = "Cette action est irréversible.", Controller = "Users" })" />
+
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-controller="Users" asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="createUserModalLabel">Créer un utilisateur</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Nom</label>
+                        <input type="text" name="Nom" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Prénom</label>
+                        <input type="text" name="Prenom" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="Email" class="form-control" autocomplete="username" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mot de passe</label>
+                        <input type="password" name="Password" class="form-control" autocomplete="new-password" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirmer le mot de passe</label>
+                        <input type="password" name="ConfirmPassword" class="form-control" autocomplete="new-password" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Rôle</label>
+                        <select name="Role" class="form-select" asp-items="@(new SelectList(ViewBag.AvailableRoles))">
+                            <option value="">-- Choisir un rôle --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Lier à un étudiant (optionnel)</label>
+                        <select name="EtudiantId" class="form-select" asp-items="@(ViewBag.AvailableEtudiants)">
+                            <option value="">-- Aucun --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Lier à un enseignant (optionnel)</label>
+                        <select name="EnseignantId" class="form-select" asp-items="@(ViewBag.AvailableEnseignants)">
+                            <option value="">-- Aucun --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer l'utilisateur</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

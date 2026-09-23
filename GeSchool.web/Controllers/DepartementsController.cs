@@ -1,6 +1,8 @@
 using FluentValidation;
 using GeSchool.Application.DTOs.Departements;
 using GeSchool.Application.Interfaces.Services;
+using GeSchool.web.Extensions;
+using GeSchool.web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -24,10 +26,19 @@ public class DepartementsController : Controller
         _updateValidator = updateValidator;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int page = 1, string sortBy = "Nom", string sortDir = "asc")
     {
         var departements = await _departementService.GetAllAsync();
-        return View(departements);
+
+        var sorted = sortBy switch
+        {
+            "Description" => SortHelper.Apply(departements, d => d.Description, sortDir),
+            _ => SortHelper.Apply(departements, d => d.Nom, sortDir)
+        };
+
+        ViewBag.SortBy = sortBy;
+        ViewBag.SortDir = sortDir;
+        return View(PagedList<DepartementDto>.Create(sorted, page));
     }
 
     public async Task<IActionResult> Details(int id)
@@ -38,6 +49,7 @@ public class DepartementsController : Controller
             return NotFound();
         }
 
+        ViewData["BreadcrumbParent"] = ("Départements", Url.Action(nameof(Index)) ?? "/Departements");
         return View(departement);
     }
 

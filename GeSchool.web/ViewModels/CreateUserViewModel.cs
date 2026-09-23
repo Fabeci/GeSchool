@@ -36,6 +36,10 @@ public class CreateUserViewModel
     [Display(Name = "Lier à un étudiant (optionnel)")]
     public int? EtudiantId { get; set; }
 
+    [Display(Name = "Lier à un enseignant (optionnel)")]
+    public int? EnseignantId { get; set; }
+
     public IEnumerable<string> AvailableRoles { get; set; } = new List<string>();
     public IEnumerable<SelectListItem> AvailableEtudiants { get; set; } = new List<SelectListItem>();
+    public IEnumerable<SelectListItem> AvailableEnseignants { get; set; } = new List<SelectListItem>();
 }

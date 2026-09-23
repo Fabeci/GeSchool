@@ -2,14 +2,18 @@ using FluentValidation;
 using GeSchool.Application.DTOs.CoursDtos;
 using GeSchool.Application.DTOs.Departements;
 using GeSchool.Application.Interfaces.Services;
+using GeSchool.Infrastructure.Identity;
+using GeSchool.web.Extensions;
+using GeSchool.web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace GeSchool.web.Controllers;
 
-[Authorize(Roles = "Administrateur")]
+[Authorize(Roles = "Administrateur,Enseignant")]
 public class CoursController : Controller
 {
     private readonly ICoursService _coursService;
@@ -17,26 +21,47 @@ public class CoursController : Controller
     private readonly IEnseignantService _enseignantService;
     private readonly IValidator<CreateCoursDto> _createValidator;
     private readonly IValidator<UpdateCoursDto> _updateValidator;
+    private readonly UserManager<ApplicationUser> _userManager;
 
     public CoursController(
         ICoursService coursService,
         IDepartementService departementService,
         IEnseignantService enseignantService,
         IValidator<CreateCoursDto> createValidator,
-        IValidator<UpdateCoursDto> updateValidator)
+        IValidator<UpdateCoursDto> updateValidator,
+        UserManager<ApplicationUser> userManager)
     {
         _coursService = coursService;
         _departementService = departementService;
         _enseignantService = enseignantService;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
+        _userManager = userManager;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int page = 1, string sortBy = "Code", string sortDir = "asc")
     {
         var cours = await _coursService.GetAllAsync();
+
+        if (IsScopedToOwnEnseignant())
+        {
+            var enseignantId = await GetCurrentEnseignantIdAsync();
+            cours = cours.Where(c => enseignantId.HasValue && c.EnseignantId == enseignantId.Value).ToList();
+        }
+
+        var sorted = sortBy switch
+        {
+            "Intitule" => SortHelper.Apply(cours, c => c.Intitule, sortDir),
+            "Credits" => SortHelper.Apply(cours, c => c.Credits, sortDir),
+            "Semestre" => SortHelper.Apply(cours, c => c.Semestre, sortDir),
+            _ => SortHelper.Apply(cours, c => c.Code, sortDir)
+        };
+
+        ViewBag.SortBy = sortBy;
+        ViewBag.SortDir = sortDir;
         await PopulateLookupsAsync();
-        return View(cours);
+        await PopulateDropdownsAsync();
+        return View(PagedList<CoursDto>.Create(sorted, page));
     }
 
     public async Task<IActionResult> Details(int id)
@@ -47,11 +72,22 @@ public class CoursController : Controller
             return NotFound();
         }
 
+        if (IsScopedToOwnEnseignant())
+        {
+            var enseignantId = await GetCurrentEnseignantIdAsync();
+            if (enseignantId is null || cours.EnseignantId != enseignantId.Value)
+            {
+                return Forbid();
+            }
+        }
+
+        ViewData["BreadcrumbParent"] = ("Cours", Url.Action(nameof(Index)) ?? "/Cours");
         await PopulateLookupsAsync();
         return View(cours);
     }
 
     [HttpGet]
+    [Authorize(Roles = "Administrateur")]
     public async Task<IActionResult> Create()
     {
         await PopulateDropdownsAsync();
@@ -59,6 +95,7 @@ public class CoursController : Controller
     }
 
     [HttpPost]
+    [Authorize(Roles = "Administrateur")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateCoursDto dto)
     {
@@ -89,6 +126,7 @@ public class CoursController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "Administrateur")]
     public async Task<IActionResult> Edit(int id)
     {
         var cours = await _coursService.GetByIdAsync(id);
@@ -113,6 +151,7 @@ public class CoursController : Controller
     }
 
     [HttpPost]
+    [Authorize(Roles = "Administrateur")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, UpdateCoursDto dto)
     {
@@ -148,6 +187,7 @@ public class CoursController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "Administrateur")]
     public async Task<IActionResult> Delete(int id)
     {
         var cours = await _coursService.GetByIdAsync(id);
@@ -160,6 +200,7 @@ public class CoursController : Controller
     }
 
     [HttpPost, ActionName("Delete")]
+    [Authorize(Roles = "Administrateur")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
@@ -191,5 +232,13 @@ public class CoursController : Controller
     {
         ViewBag.DepartementsById = (await _departementService.GetAllAsync()).ToDictionary(d => d.Id);
         ViewBag.EnseignantsById = (await _enseignantService.GetAllAsync()).ToDictionary(e => e.Id);
+    }
+
+    private bool IsScopedToOwnEnseignant() => User.IsInRole("Enseignant") && !User.IsInRole("Administrateur");
+
+    private async Task<int?> GetCurrentEnseignantIdAsync()
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        return currentUser?.EnseignantId;
     }
 }

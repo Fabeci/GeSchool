@@ -1,8 +1,41 @@
-@* Composant de pagination visuel, prêt pour une future pagination serveur. *@
-<div class="gs-pagination">
-    <span data-pagination-summary>Affichage de tous les résultats</span>
-    <div class="page-controls">
-        <button type="button" class="btn btn-sm btn-outline-secondary" disabled>Précédent</button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" disabled>Suivant</button>
+@model IPagedList
+@{
+    var sortBy = Context.Request.Query["sortBy"].ToString();
+    var sortDir = Context.Request.Query["sortDir"].ToString();
+
+    string PageUrl(int page)
+    {
+        var qs = $"page={page}";
+        if (!string.IsNullOrEmpty(sortBy)) qs += $"&sortBy={Uri.EscapeDataString(sortBy)}";
+        if (!string.IsNullOrEmpty(sortDir)) qs += $"&sortDir={Uri.EscapeDataString(sortDir)}";
+        return "?" + qs;
+    }
+
+    var from = Model.TotalCount == 0 ? 0 : (Model.PageNumber - 1) * Model.PageSize + 1;
+    var to = Math.Min(Model.PageNumber * Model.PageSize, Model.TotalCount);
+}
+@if (Model.TotalCount > 0)
+{
+    <div class="gs-pagination">
+        <span data-pagination-summary>Affichage de @from–@to sur @Model.TotalCount</span>
+        <div class="page-controls">
+            @if (Model.HasPrevious)
+            {
+                <a href="@PageUrl(Model.PageNumber - 1)" class="btn btn-sm btn-outline-secondary">@IconHelper.Render("chevron-left") Précédent</a>
+            }
+            else
+            {
+                <button type="button" class="btn btn-sm btn-outline-secondary" disabled>@IconHelper.Render("chevron-left") Précédent</button>
+            }
+            <span class="gs-pagination-page">Page @Model.PageNumber / @Model.TotalPages</span>
+            @if (Model.HasNext)
+            {
+                <a href="@PageUrl(Model.PageNumber + 1)" class="btn btn-sm btn-outline-secondary">Suivant @IconHelper.Render("chevron-right")</a>
+            }
+            else
+            {
+                <button type="button" class="btn btn-sm btn-outline-secondary" disabled>Suivant @IconHelper.Render("chevron-right")</button>
+            }
+        </div>
     </div>
-</div>
+}

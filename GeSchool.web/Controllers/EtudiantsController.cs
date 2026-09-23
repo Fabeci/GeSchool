@@ -2,37 +2,68 @@ using FluentValidation;
 using GeSchool.Application.DTOs.Departements;
 using GeSchool.Application.DTOs.Etudiants;
 using GeSchool.Application.Interfaces.Services;
+using GeSchool.Infrastructure.Identity;
+using GeSchool.web.Extensions;
+using GeSchool.web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace GeSchool.web.Controllers;
 
-[Authorize(Roles = "Administrateur")]
+[Authorize(Roles = "Administrateur,Enseignant")]
 public class EtudiantsController : Controller
 {
     private readonly IEtudiantService _etudiantService;
     private readonly IDepartementService _departementService;
+    private readonly ICoursService _coursService;
+    private readonly IInscriptionService _inscriptionService;
     private readonly IValidator<CreateEtudiantDto> _createValidator;
     private readonly IValidator<UpdateEtudiantDto> _updateValidator;
+    private readonly UserManager<ApplicationUser> _userManager;
 
     public EtudiantsController(
         IEtudiantService etudiantService,
         IDepartementService departementService,
+        ICoursService coursService,
+        IInscriptionService inscriptionService,
         IValidator<CreateEtudiantDto> createValidator,
-        IValidator<UpdateEtudiantDto> updateValidator)
+        IValidator<UpdateEtudiantDto> updateValidator,
+        UserManager<ApplicationUser> userManager)
     {
         _etudiantService = etudiantService;
         _departementService = departementService;
+        _coursService = coursService;
+        _inscriptionService = inscriptionService;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
+        _userManager = userManager;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int page = 1, string sortBy = "Nom", string sortDir = "asc")
     {
         var etudiants = await _etudiantService.GetAllAsync();
-        return View(etudiants);
+
+        if (IsScopedToOwnEnseignant())
+        {
+            var ownIds = await GetOwnEtudiantIdsAsync();
+            etudiants = etudiants.Where(e => ownIds.Contains(e.Id)).ToList();
+        }
+
+        var sorted = sortBy switch
+        {
+            "Prenom" => SortHelper.Apply(etudiants, e => e.Prenom, sortDir),
+            "NumeroEtudiant" => SortHelper.Apply(etudiants, e => e.NumeroEtudiant, sortDir),
+            "Email" => SortHelper.Apply(etudiants, e => e.Email, sortDir),
+            _ => SortHelper.Apply(etudiants, e => e.Nom, sortDir)
+        };
+
+        ViewBag.SortBy = sortBy;
+        ViewBag.SortDir = sortDir;
+        await PopulateDepartementsAsync();
+        return View(PagedList<EtudiantDto>.Create(sorted, page));
     }
 
     public async Task<IActionResult> Details(int id)
@@ -43,10 +74,21 @@ public class EtudiantsController : Controller
             return NotFound();
         }
 
+        if (IsScopedToOwnEnseignant())
+        {
+            var ownIds = await GetOwnEtudiantIdsAsync();
+            if (!ownIds.Contains(id))
+            {
+                return Forbid();
+            }
+        }
+
+        ViewData["BreadcrumbParent"] = ("Étudiants", Url.Action(nameof(Index)) ?? "/Etudiants");
         return View(etudiant);
     }
 
     [HttpGet]
+    [Authorize(Roles = "Administrateur")]
     public async Task<IActionResult> Create()
     {
         await PopulateDepartementsAsync();
@@ -54,6 +96,7 @@ public class EtudiantsController : Controller
     }
 
     [HttpPost]
+    [Authorize(Roles = "Administrateur")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateEtudiantDto dto)
     {
@@ -84,6 +127,7 @@ public class EtudiantsController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "Administrateur")]
     public async Task<IActionResult> Edit(int id)
     {
         var etudiant = await _etudiantService.GetByIdAsync(id);
@@ -108,6 +152,7 @@ public class EtudiantsController : Controller
     }
 
     [HttpPost]
+    [Authorize(Roles = "Administrateur")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, UpdateEtudiantDto dto)
     {
@@ -143,6 +188,7 @@ public class EtudiantsController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "Administrateur")]
     public async Task<IActionResult> Delete(int id)
     {
         var etudiant = await _etudiantService.GetByIdAsync(id);
@@ -155,6 +201,7 @@ public class EtudiantsController : Controller
     }
 
     [HttpPost, ActionName("Delete")]
+    [Authorize(Roles = "Administrateur")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
@@ -176,5 +223,26 @@ public class EtudiantsController : Controller
     {
         var departements = await _departementService.GetAllAsync();
         ViewBag.Departements = new SelectList(departements, nameof(DepartementDto.Id), nameof(DepartementDto.Nom));
+    }
+
+    private bool IsScopedToOwnEnseignant() => User.IsInRole("Enseignant") && !User.IsInRole("Administrateur");
+
+    private async Task<HashSet<int>> GetOwnEtudiantIdsAsync()
+    {
+        var enseignantId = (await _userManager.GetUserAsync(User))?.EnseignantId;
+        if (enseignantId is null)
+        {
+            return new HashSet<int>();
+        }
+
+        var coursIds = (await _coursService.GetAllAsync())
+            .Where(c => c.EnseignantId == enseignantId.Value)
+            .Select(c => c.Id)
+            .ToHashSet();
+
+        return (await _inscriptionService.GetAllAsync())
+            .Where(i => coursIds.Contains(i.CoursId))
+            .Select(i => i.EtudiantId)
+            .ToHashSet();
     }
 }

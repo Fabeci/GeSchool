@@ -1,4 +1,4 @@
-@model IReadOnlyList<InscriptionDto>
+@model PagedList<InscriptionDto>
 @{
     ViewData["Title"] = "Inscriptions";
     ViewData["Subtitle"] = "Gérer les inscriptions aux cours";
@@ -11,13 +11,17 @@
         @IconHelper.Render("search")
         <input type="search" class="form-control" placeholder="Rechercher..." data-table-search data-table-target="#inscriptionsTable" aria-label="Rechercher une inscription" />
     </div>
-    <a asp-action="Create" class="btn btn-primary">
+    <button type="button" class="btn btn-outline-secondary" data-csv-export data-csv-target="#inscriptionsTable" data-csv-filename="inscriptions.csv">
+        @IconHelper.Render("download")
+        Exporter CSV
+    </button>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createInscriptionModal">
         @IconHelper.Render("plus")
         Nouvelle inscription
-    </a>
+    </button>
 </div>
 
-@if (Model.Count == 0)
+@if (Model.TotalCount == 0)
 {
     <partial name="_EmptyState" model="@(new EmptyStateViewModel { Icon = "clipboard-list", Title = "Aucune inscription", Message = "Aucune inscription n'a encore été enregistrée.", ActionText = "Créer une inscription", ActionController = "Inscriptions" })" />
 }
@@ -29,12 +33,12 @@ else
                 <tr>
                     <th>Étudiant</th>
                     <th>Cours</th>
-                    <th>Date d'inscription</th>
+                    <th><partial name="_SortLink" model="@(new SortLinkViewModel { Text = "Date d'inscription", SortKey = "DateInscription", CurrentSort = ViewBag.SortBy, CurrentDir = ViewBag.SortDir })" /></th>
                     <th class="col-actions"></th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model)
+                @foreach (var item in Model.Items)
                 {
                     var etudiantLabel = etudiants.TryGetValue(item.EtudiantId, out var e) ? $"{e.NumeroEtudiant} - {e.Nom} {e.Prenom}" : item.EtudiantId.ToString();
                     var coursLabel = cours.TryGetValue(item.CoursId, out var c) ? $"{c.Code} - {c.Intitule}" : item.CoursId.ToString();
@@ -44,8 +48,10 @@ else
                         <td>@item.DateInscription.ToString("yyyy-MM-dd")</td>
                         <td class="col-actions">
                             <a asp-action="Details" asp-route-id="@item.Id" class="btn-icon" title="Détails" aria-label="Détails">@IconHelper.Render("eye")</a>
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn-icon" title="Modifier" aria-label="Modifier">@IconHelper.Render("pencil")</a>
-                            <button type="button" class="btn-icon" title="Supprimer" aria-label="Supprimer" data-bs-toggle="modal" data-bs-target="#confirmDeleteInscription" data-id="@item.Id" data-label="@etudiantLabel — @coursLabel">
+                            <button type="button" class="btn-icon" title="Modifier" aria-label="Modifier" data-bs-toggle="modal" data-bs-target="#editInscriptionModal" data-edit="@System.Text.Json.JsonSerializer.Serialize(new { item.Id, item.EtudiantId, item.CoursId, DateInscription = item.DateInscription.ToString("yyyy-MM-dd"), url = Url.Action("Edit", new { id = item.Id }) })">
+                                @IconHelper.Render("pencil")
+                            </button>
+                            <button type="button" class="btn-icon" title="Supprimer" aria-label="Supprimer" data-bs-toggle="modal" data-bs-target="#confirmDeleteInscription" data-id="@item.Id" data-label="@etudiantLabel — @coursLabel" data-restore="@System.Text.Json.JsonSerializer.Serialize(new { item.EtudiantId, item.CoursId, DateInscription = item.DateInscription.ToString("yyyy-MM-dd") })">
                                 @IconHelper.Render("trash")
                             </button>
                         </td>
@@ -56,7 +62,81 @@ else
                 </tr>
             </tbody>
         </table>
+        <partial name="_Pagination" model="Model" />
     </div>
 }
 
 <partial name="_ConfirmDeleteModal" model="@(new ConfirmDeleteModalViewModel { Id = "confirmDeleteInscription", Title = "Supprimer cette inscription ?", Message = "Les notes associées seront également supprimées. Cette action est irréversible.", Controller = "Inscriptions" })" />
+
+<div class="modal fade" id="createInscriptionModal" tabindex="-1" aria-labelledby="createInscriptionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-controller="Inscriptions" asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="createInscriptionModalLabel">Nouvelle inscription</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Étudiant</label>
+                        <select name="EtudiantId" class="form-select" asp-items="@(ViewBag.EtudiantOptions as SelectList)">
+                            <option value="">-- Choisir un étudiant --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cours</label>
+                        <select name="CoursId" class="form-select" asp-items="@(ViewBag.CoursOptions as SelectList)">
+                            <option value="">-- Choisir un cours --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date d'inscription</label>
+                        <input type="date" name="DateInscription" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer l'inscription</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editInscriptionModal" tabindex="-1" aria-labelledby="editInscriptionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-controller="Inscriptions" asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="editInscriptionModalLabel">Modifier l'inscription</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="Id" />
+                    <div class="form-group">
+                        <label class="form-label">Étudiant</label>
+                        <select name="EtudiantId" class="form-select" asp-items="@(ViewBag.EtudiantOptions as SelectList)">
+                            <option value="">-- Choisir un étudiant --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cours</label>
+                        <select name="CoursId" class="form-select" asp-items="@(ViewBag.CoursOptions as SelectList)">
+                            <option value="">-- Choisir un cours --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date d'inscription</label>
+                        <input type="date" name="DateInscription" class="form-control" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

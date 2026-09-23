@@ -1,4 +1,4 @@
-@model IReadOnlyList<CoursDto>
+@model PagedList<CoursDto>
 @{
     ViewData["Title"] = "Cours";
     ViewData["Subtitle"] = "Gérer le catalogue de cours";
@@ -11,15 +11,22 @@
         @IconHelper.Render("search")
         <input type="search" class="form-control" placeholder="Rechercher un cours..." data-table-search data-table-target="#coursTable" aria-label="Rechercher un cours" />
     </div>
-    <a asp-action="Create" class="btn btn-primary">
-        @IconHelper.Render("plus")
-        Nouveau cours
-    </a>
+    <button type="button" class="btn btn-outline-secondary" data-csv-export data-csv-target="#coursTable" data-csv-filename="cours.csv">
+        @IconHelper.Render("download")
+        Exporter CSV
+    </button>
+    @if (User.IsInRole("Administrateur"))
+    {
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCoursModal">
+            @IconHelper.Render("plus")
+            Nouveau cours
+        </button>
+    }
 </div>
 
-@if (Model.Count == 0)
+@if (Model.TotalCount == 0)
 {
-    <partial name="_EmptyState" model="@(new EmptyStateViewModel { Icon = "book-open", Title = "Aucun cours", Message = "Aucun cours n'a encore été créé.", ActionText = "Créer un cours", ActionController = "Cours" })" />
+    <partial name="_EmptyState" model="@(new EmptyStateViewModel { Icon = "book-open", Title = "Aucun cours", Message = User.IsInRole("Administrateur") ? "Aucun cours n'a encore été créé." : "Vous n'êtes responsable d'aucun cours pour le moment.", ActionText = User.IsInRole("Administrateur") ? "Créer un cours" : null, ActionController = User.IsInRole("Administrateur") ? "Cours" : null })" />
 }
 else
 {
@@ -27,17 +34,17 @@ else
         <table class="gs-table" id="coursTable">
             <thead>
                 <tr>
-                    <th>Code</th>
-                    <th>Intitulé</th>
-                    <th>Crédits</th>
-                    <th>Semestre</th>
+                    <th><partial name="_SortLink" model="@(new SortLinkViewModel { Text = "Code", SortKey = "Code", CurrentSort = ViewBag.SortBy, CurrentDir = ViewBag.SortDir })" /></th>
+                    <th><partial name="_SortLink" model="@(new SortLinkViewModel { Text = "Intitulé", SortKey = "Intitule", CurrentSort = ViewBag.SortBy, CurrentDir = ViewBag.SortDir })" /></th>
+                    <th><partial name="_SortLink" model="@(new SortLinkViewModel { Text = "Crédits", SortKey = "Credits", CurrentSort = ViewBag.SortBy, CurrentDir = ViewBag.SortDir })" /></th>
+                    <th><partial name="_SortLink" model="@(new SortLinkViewModel { Text = "Semestre", SortKey = "Semestre", CurrentSort = ViewBag.SortBy, CurrentDir = ViewBag.SortDir })" /></th>
                     <th>Enseignant</th>
                     <th>Département</th>
                     <th class="col-actions"></th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model)
+                @foreach (var item in Model.Items)
                 {
                     <tr data-row>
                         <td><span class="badge-soft neutral">@item.Code</span></td>
@@ -48,10 +55,15 @@ else
                         <td>@(departements.TryGetValue(item.DepartementId, out var d) ? d.Nom : "—")</td>
                         <td class="col-actions">
                             <a asp-action="Details" asp-route-id="@item.Id" class="btn-icon" title="Détails" aria-label="Détails de @item.Code">@IconHelper.Render("eye")</a>
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn-icon" title="Modifier" aria-label="Modifier @item.Code">@IconHelper.Render("pencil")</a>
-                            <button type="button" class="btn-icon" title="Supprimer" aria-label="Supprimer @item.Code" data-bs-toggle="modal" data-bs-target="#confirmDeleteCours" data-id="@item.Id" data-label="@item.Code - @item.Intitule">
-                                @IconHelper.Render("trash")
-                            </button>
+                            @if (User.IsInRole("Administrateur"))
+                            {
+                                <button type="button" class="btn-icon" title="Modifier" aria-label="Modifier @item.Code" data-bs-toggle="modal" data-bs-target="#editCoursModal" data-edit="@System.Text.Json.JsonSerializer.Serialize(new { item.Id, item.Code, item.Intitule, item.Credits, item.Semestre, item.DepartementId, item.EnseignantId, url = Url.Action("Edit", new { id = item.Id }) })">
+                                    @IconHelper.Render("pencil")
+                                </button>
+                                <button type="button" class="btn-icon" title="Supprimer" aria-label="Supprimer @item.Code" data-bs-toggle="modal" data-bs-target="#confirmDeleteCours" data-id="@item.Id" data-label="@item.Code - @item.Intitule" data-restore="@System.Text.Json.JsonSerializer.Serialize(new { item.Code, item.Intitule, item.Credits, item.Semestre, item.DepartementId, item.EnseignantId })">
+                                    @IconHelper.Render("trash")
+                                </button>
+                            }
                         </td>
                     </tr>
                 }
@@ -60,7 +72,108 @@ else
                 </tr>
             </tbody>
         </table>
+        <partial name="_Pagination" model="Model" />
     </div>
 }
 
 <partial name="_ConfirmDeleteModal" model="@(new ConfirmDeleteModalViewModel { Id = "confirmDeleteCours", Title = "Supprimer ce cours ?", Message = "Cette action est irréversible.", Controller = "Cours" })" />
+
+@if (User.IsInRole("Administrateur"))
+{
+    <div class="modal fade" id="createCoursModal" tabindex="-1" aria-labelledby="createCoursModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-controller="Cours" asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="createCoursModalLabel">Nouveau cours</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label">Code</label>
+                            <input type="text" name="Code" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Intitulé</label>
+                            <input type="text" name="Intitule" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Crédits</label>
+                            <input type="number" name="Credits" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Semestre</label>
+                            <input type="text" name="Semestre" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Département</label>
+                            <select name="DepartementId" class="form-select" asp-items="@(ViewBag.Departements as SelectList)">
+                                <option value="">-- Choisir un département --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Enseignant</label>
+                            <select name="EnseignantId" class="form-select" asp-items="@(ViewBag.Enseignants as SelectList)">
+                                <option value="">-- Choisir un enseignant --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary">Créer le cours</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editCoursModal" tabindex="-1" aria-labelledby="editCoursModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-controller="Cours" asp-action="Edit" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="editCoursModalLabel">Modifier le cours</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="Id" />
+                        <div class="form-group">
+                            <label class="form-label">Code</label>
+                            <input type="text" name="Code" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Intitulé</label>
+                            <input type="text" name="Intitule" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Crédits</label>
+                            <input type="number" name="Credits" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Semestre</label>
+                            <input type="text" name="Semestre" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Département</label>
+                            <select name="DepartementId" class="form-select" asp-items="@(ViewBag.Departements as SelectList)">
+                                <option value="">-- Choisir un département --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Enseignant</label>
+                            <select name="EnseignantId" class="form-select" asp-items="@(ViewBag.Enseignants as SelectList)">
+                                <option value="">-- Choisir un enseignant --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}

@@ -1,0 +1,17 @@
+@{
+    var title = ViewData["Title"] as string;
+    var parent = ViewData["BreadcrumbParent"] as (string Text, string Url)?;
+}
+@if (!string.IsNullOrEmpty(title))
+{
+    <nav class="gs-breadcrumb" aria-label="Fil d'Ariane">
+        <a href="/">Accueil</a>
+        @if (parent.HasValue)
+        {
+            <span class="sep">/</span>
+            <a href="@parent.Value.Url">@parent.Value.Text</a>
+        }
+        <span class="sep">/</span>
+        <span class="gs-breadcrumb-current">@title</span>
+    </nav>
+}

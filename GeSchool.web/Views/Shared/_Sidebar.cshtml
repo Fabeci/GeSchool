@@ -1,8 +1,13 @@
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
 
     bool IsActive(string controller) => string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase);
     string ActiveClass(string controller) => IsActive(controller) ? "gs-sidebar-link active" : "gs-sidebar-link";
+    string ActiveClassForAction(string controller, string action) =>
+        IsActive(controller) && string.Equals(currentAction, action, StringComparison.OrdinalIgnoreCase)
+            ? "gs-sidebar-link active"
+            : "gs-sidebar-link";
 }
 
 <aside class="gs-sidebar" id="gsSidebar">
@@ -56,9 +61,38 @@
             </a>
         }
 
+        @if (User.IsInRole("Enseignant") && !User.IsInRole("Administrateur"))
+        {
+            <div class="gs-sidebar-group-title">Mes cours</div>
+            <a asp-controller="Cours" asp-action="Index" class="@ActiveClass("Cours")">
+                @IconHelper.Render("book-open")
+                <span>Mes cours</span>
+            </a>
+            <a asp-controller="Etudiants" asp-action="Index" class="@ActiveClass("Etudiants")">
+                @IconHelper.Render("graduation-cap")
+                <span>Mes étudiants</span>
+            </a>
+            <a asp-controller="Inscriptions" asp-action="Index" class="@ActiveClass("Inscriptions")">
+                @IconHelper.Render("clipboard-list")
+                <span>Inscriptions</span>
+            </a>
+            <a asp-controller="Notes" asp-action="Index" class="@ActiveClass("Notes")">
+                @IconHelper.Render("file-text")
+                <span>Notes</span>
+            </a>
+        }
+
         @if (User.IsInRole("Etudiant"))
         {
             <div class="gs-sidebar-group-title">Mon espace</div>
+            <a asp-controller="Profil" asp-action="Index" class="@ActiveClassForAction("Profil", "Index")">
+                @IconHelper.Render("users")
+                <span>Mon profil</span>
+            </a>
+            <a asp-controller="Profil" asp-action="MesCours" class="@ActiveClassForAction("Profil", "MesCours")">
+                @IconHelper.Render("book-open")
+                <span>Mes cours</span>
+            </a>
             <a asp-controller="Bulletin" asp-action="Mine" class="@ActiveClass("Bulletin")">
                 @IconHelper.Render("award")
                 <span>Mon bulletin</span>

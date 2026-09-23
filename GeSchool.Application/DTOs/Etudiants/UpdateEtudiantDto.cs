@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace GeSchool.Application.DTOs.Etudiants;
 
 public class UpdateEtudiantDto
@@ -8,5 +10,7 @@ public class UpdateEtudiantDto
     public string Prenom { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public DateTime DateNaissance { get; set; }
+
+    [Display(Name = "Département")]
     public int DepartementId { get; set; }
 }

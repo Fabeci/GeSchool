@@ -1,0 +1,33 @@
+@media print {
+  .gs-sidebar,
+  .gs-topbar,
+  .gs-sidebar-backdrop,
+  .gs-alerts,
+  .gs-toast-container,
+  .gs-page-header,
+  .gs-pagination,
+  .gs-breadcrumb,
+  .col-actions,
+  [data-no-print] {
+    display: none !important;
+  }
+
+  .gs-app-shell,
+  .gs-app-main,
+  .gs-content {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border-color: #ccc !important;
+    break-inside: avoid;
+  }
+}

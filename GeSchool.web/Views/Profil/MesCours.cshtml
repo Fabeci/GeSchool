@@ -1,0 +1,40 @@
+@model IReadOnlyList<MonCoursViewModel>
+@{
+    ViewData["Title"] = "Mes cours";
+    ViewData["Subtitle"] = "Cours auxquels vous êtes inscrit";
+}
+
+@if (Model.Count == 0)
+{
+    <partial name="_EmptyState" model="@(new EmptyStateViewModel { Icon = "book-open", Title = "Aucun cours", Message = "Vous n'êtes inscrit à aucun cours pour le moment." })" />
+}
+else
+{
+    <div class="gs-table-wrapper gs-table-responsive">
+        <table class="gs-table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Intitulé</th>
+                    <th>Crédits</th>
+                    <th>Semestre</th>
+                    <th>Enseignant</th>
+                    <th>Inscrit le</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td><span class="badge-soft neutral">@item.Code</span></td>
+                        <td>@item.Intitule</td>
+                        <td>@item.Credits</td>
+                        <td>@item.Semestre</td>
+                        <td>@item.EnseignantNom</td>
+                        <td>@item.DateInscription.ToString("yyyy-MM-dd")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

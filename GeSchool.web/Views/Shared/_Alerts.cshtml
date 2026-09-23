@@ -1,28 +1,27 @@
-@if (TempData["Success"] is string successMessage)
-{
-    <div class="gs-alert success" role="status">
-        @IconHelper.Render("check-circle")
-        <span>@successMessage</span>
-    </div>
+@{
+    var toasts = new (string Type, string Icon, string? Message, string Role)[]
+    {
+        ("success", "check-circle", TempData["Success"] as string, "status"),
+        ("danger", "x-circle", TempData["Error"] as string, "alert"),
+        ("warning", "alert-triangle", TempData["Warning"] as string, "alert"),
+        ("info", "info", TempData["Info"] as string, "status"),
+    };
 }
-@if (TempData["Error"] is string errorMessage)
-{
-    <div class="gs-alert danger" role="alert">
-        @IconHelper.Render("x-circle")
-        <span>@errorMessage</span>
-    </div>
-}
-@if (TempData["Warning"] is string warningMessage)
-{
-    <div class="gs-alert warning" role="alert">
-        @IconHelper.Render("alert-triangle")
-        <span>@warningMessage</span>
-    </div>
-}
-@if (TempData["Info"] is string infoMessage)
-{
-    <div class="gs-alert info" role="status">
-        @IconHelper.Render("info")
-        <span>@infoMessage</span>
-    </div>
-}
+<div class="gs-toast-container" id="gsToastContainer" aria-live="polite">
+    @foreach (var toast in toasts)
+    {
+        if (toast.Message is not null)
+        {
+            <div class="gs-toast @toast.Type" role="@toast.Role" data-toast data-toast-type="@toast.Type">
+                <span class="gs-toast-icon @toast.Type">@IconHelper.Render(toast.Icon)</span>
+                <div class="gs-toast-body">
+                    <span>@toast.Message</span>
+                    <div class="gs-toast-actions" data-toast-actions></div>
+                </div>
+                <button type="button" class="gs-toast-close" data-toast-close aria-label="Fermer">
+                    @IconHelper.Render("x")
+                </button>
+            </div>
+        }
+    }
+</div>

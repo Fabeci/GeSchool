@@ -1,5 +1,6 @@
 using GeSchool.Application.Interfaces.Services;
 using GeSchool.Infrastructure.Identity;
+using GeSchool.web.Extensions;
 using GeSchool.web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -15,15 +16,21 @@ public class UsersController : Controller
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IEtudiantService _etudiantService;
+    private readonly IEnseignantService _enseignantService;
 
-    public UsersController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IEtudiantService etudiantService)
+    public UsersController(
+        UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole> roleManager,
+        IEtudiantService etudiantService,
+        IEnseignantService enseignantService)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _etudiantService = etudiantService;
+        _enseignantService = enseignantService;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int page = 1, string sortBy = "Email", string sortDir = "asc")
     {
         var users = await _userManager.Users.OrderBy(u => u.Email).ToListAsync();
 
@@ -33,7 +40,22 @@ public class UsersController : Controller
             items.Add(await ToViewModelAsync(user));
         }
 
-        return View(items);
+        var sorted = sortBy switch
+        {
+            "Nom" => SortHelper.Apply(items, i => i.Nom, sortDir),
+            _ => SortHelper.Apply(items, i => i.Email, sortDir)
+        };
+
+        var lookupModel = new CreateUserViewModel { AvailableRoles = _roleManager.Roles.Select(r => r.Name!).ToList() };
+        await PopulateEtudiantsAsync(lookupModel);
+        await PopulateEnseignantsAsync(lookupModel);
+        ViewBag.AvailableRoles = lookupModel.AvailableRoles;
+        ViewBag.AvailableEtudiants = lookupModel.AvailableEtudiants;
+        ViewBag.AvailableEnseignants = lookupModel.AvailableEnseignants;
+        ViewBag.SortBy = sortBy;
+        ViewBag.SortDir = sortDir;
+
+        return View(PagedList<UserListItemViewModel>.Create(sorted, page));
     }
 
     [HttpGet]
@@ -41,6 +63,7 @@ public class UsersController : Controller
     {
         var model = new CreateUserViewModel { AvailableRoles = _roleManager.Roles.Select(r => r.Name!).ToList() };
         await PopulateEtudiantsAsync(model);
+        await PopulateEnseignantsAsync(model);
         return View(model);
     }
 
@@ -52,6 +75,7 @@ public class UsersController : Controller
         {
             model.AvailableRoles = _roleManager.Roles.Select(r => r.Name!).ToList();
             await PopulateEtudiantsAsync(model);
+            await PopulateEnseignantsAsync(model);
             return View(model);
         }
 
@@ -62,7 +86,8 @@ public class UsersController : Controller
             EmailConfirmed = true,
             Nom = model.Nom,
             Prenom = model.Prenom,
-            EtudiantId = model.EtudiantId
+            EtudiantId = model.EtudiantId,
+            EnseignantId = model.EnseignantId
         };
 
         var result = await _userManager.CreateAsync(user, model.Password);
@@ -81,6 +106,7 @@ public class UsersController : Controller
 
         model.AvailableRoles = _roleManager.Roles.Select(r => r.Name!).ToList();
         await PopulateEtudiantsAsync(model);
+        await PopulateEnseignantsAsync(model);
         return View(model);
     }
 
@@ -132,6 +158,14 @@ public class UsersController : Controller
         var etudiants = await _etudiantService.GetAllAsync();
         model.AvailableEtudiants = etudiants
             .Select(e => new SelectListItem($"{e.NumeroEtudiant} - {e.Nom} {e.Prenom}", e.Id.ToString()))
+            .ToList();
+    }
+
+    private async Task PopulateEnseignantsAsync(CreateUserViewModel model)
+    {
+        var enseignants = await _enseignantService.GetAllAsync();
+        model.AvailableEnseignants = enseignants
+            .Select(e => new SelectListItem($"{e.Nom} {e.Prenom}", e.Id.ToString()))
             .ToList();
     }
 

@@ -1,7 +1,6 @@
 @model EtudiantDto
-
 @{
-    ViewData["Title"] = "Détails de l'étudiant";
+    ViewData["Title"] = "Mon profil";
     var initiale = Model.Nom.Length > 0 ? Model.Nom[..1].ToUpperInvariant() : "?";
 }
 
@@ -26,15 +25,4 @@
             </div>
         </dl>
     </div>
-</div>
-
-<div style="margin-top:var(--space-4);display:flex;gap:var(--space-2);">
-    @if (User.IsInRole("Administrateur"))
-    {
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
-            @IconHelper.Render("pencil")
-            Modifier
-        </a>
-    }
-    <a asp-action="Index" class="btn btn-outline-secondary">Retour à la liste</a>
 </div>

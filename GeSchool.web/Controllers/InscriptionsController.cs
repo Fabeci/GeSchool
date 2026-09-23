@@ -3,14 +3,18 @@ using GeSchool.Application.DTOs.CoursDtos;
 using GeSchool.Application.DTOs.Etudiants;
 using GeSchool.Application.DTOs.Inscriptions;
 using GeSchool.Application.Interfaces.Services;
+using GeSchool.Infrastructure.Identity;
+using GeSchool.web.Extensions;
+using GeSchool.web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace GeSchool.web.Controllers;
 
-[Authorize(Roles = "Administrateur")]
+[Authorize(Roles = "Administrateur,Enseignant")]
 public class InscriptionsController : Controller
 {
     private readonly IInscriptionService _inscriptionService;
@@ -18,26 +22,41 @@ public class InscriptionsController : Controller
     private readonly ICoursService _coursService;
     private readonly IValidator<CreateInscriptionDto> _createValidator;
     private readonly IValidator<UpdateInscriptionDto> _updateValidator;
+    private readonly UserManager<ApplicationUser> _userManager;
 
     public InscriptionsController(
         IInscriptionService inscriptionService,
         IEtudiantService etudiantService,
         ICoursService coursService,
         IValidator<CreateInscriptionDto> createValidator,
-        IValidator<UpdateInscriptionDto> updateValidator)
+        IValidator<UpdateInscriptionDto> updateValidator,
+        UserManager<ApplicationUser> userManager)
     {
         _inscriptionService = inscriptionService;
         _etudiantService = etudiantService;
         _coursService = coursService;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
+        _userManager = userManager;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int page = 1, string sortBy = "DateInscription", string sortDir = "desc")
     {
         var inscriptions = await _inscriptionService.GetAllAsync();
+
+        if (IsScopedToOwnEnseignant())
+        {
+            var ownCoursIds = await GetOwnCoursIdsAsync();
+            inscriptions = inscriptions.Where(i => ownCoursIds.Contains(i.CoursId)).ToList();
+        }
+
+        var sorted = SortHelper.Apply(inscriptions, i => i.DateInscription, sortDir);
+
+        ViewBag.SortBy = sortBy;
+        ViewBag.SortDir = sortDir;
         await PopulateLookupsAsync();
-        return View(inscriptions);
+        await PopulateDropdownsAsync();
+        return View(PagedList<InscriptionDto>.Create(sorted, page));
     }
 
     public async Task<IActionResult> Details(int id)
@@ -48,6 +67,12 @@ public class InscriptionsController : Controller
             return NotFound();
         }
 
+        if (IsScopedToOwnEnseignant() && !(await GetOwnCoursIdsAsync()).Contains(inscription.CoursId))
+        {
+            return Forbid();
+        }
+
+        ViewData["BreadcrumbParent"] = ("Inscriptions", Url.Action(nameof(Index)) ?? "/Inscriptions");
         await PopulateLookupsAsync();
         return View(inscription);
     }
@@ -75,6 +100,11 @@ public class InscriptionsController : Controller
             return View(dto);
         }
 
+        if (IsScopedToOwnEnseignant() && !(await GetOwnCoursIdsAsync()).Contains(dto.CoursId))
+        {
+            return Forbid();
+        }
+
         try
         {
             await _inscriptionService.CreateAsync(dto);
@@ -98,6 +128,11 @@ public class InscriptionsController : Controller
             return NotFound();
         }
 
+        if (IsScopedToOwnEnseignant() && !(await GetOwnCoursIdsAsync()).Contains(inscription.CoursId))
+        {
+            return Forbid();
+        }
+
         var dto = new UpdateInscriptionDto
         {
             Id = inscription.Id,
@@ -117,6 +152,21 @@ public class InscriptionsController : Controller
         if (id != dto.Id)
         {
             return NotFound();
+        }
+
+        var existing = await _inscriptionService.GetByIdAsync(id);
+        if (existing is null)
+        {
+            return NotFound();
+        }
+
+        if (IsScopedToOwnEnseignant())
+        {
+            var ownCoursIds = await GetOwnCoursIdsAsync();
+            if (!ownCoursIds.Contains(existing.CoursId) || !ownCoursIds.Contains(dto.CoursId))
+            {
+                return Forbid();
+            }
         }
 
         var validationResult = await _updateValidator.ValidateAsync(dto);
@@ -154,6 +204,11 @@ public class InscriptionsController : Controller
             return NotFound();
         }
 
+        if (IsScopedToOwnEnseignant() && !(await GetOwnCoursIdsAsync()).Contains(inscription.CoursId))
+        {
+            return Forbid();
+        }
+
         await PopulateLookupsAsync();
         return View(inscription);
     }
@@ -162,6 +217,17 @@ public class InscriptionsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
+        var inscription = await _inscriptionService.GetByIdAsync(id);
+        if (inscription is null)
+        {
+            return NotFound();
+        }
+
+        if (IsScopedToOwnEnseignant() && !(await GetOwnCoursIdsAsync()).Contains(inscription.CoursId))
+        {
+            return Forbid();
+        }
+
         await _inscriptionService.DeleteAsync(id);
         TempData["Success"] = "Inscription supprimée avec succès.";
         return RedirectToAction(nameof(Index));
@@ -174,6 +240,12 @@ public class InscriptionsController : Controller
         ViewBag.EtudiantOptions = new SelectList(etudiantItems, "Id", "Label");
 
         var cours = await _coursService.GetAllAsync();
+        if (IsScopedToOwnEnseignant())
+        {
+            var ownCoursIds = await GetOwnCoursIdsAsync();
+            cours = cours.Where(c => ownCoursIds.Contains(c.Id)).ToList();
+        }
+
         var coursItems = cours.Select(c => new { c.Id, Label = $"{c.Code} - {c.Intitule}" });
         ViewBag.CoursOptions = new SelectList(coursItems, "Id", "Label");
     }
@@ -185,5 +257,21 @@ public class InscriptionsController : Controller
 
         var cours = await _coursService.GetAllAsync();
         ViewBag.Cours = cours.ToDictionary(c => c.Id);
+    }
+
+    private bool IsScopedToOwnEnseignant() => User.IsInRole("Enseignant") && !User.IsInRole("Administrateur");
+
+    private async Task<HashSet<int>> GetOwnCoursIdsAsync()
+    {
+        var enseignantId = (await _userManager.GetUserAsync(User))?.EnseignantId;
+        if (enseignantId is null)
+        {
+            return new HashSet<int>();
+        }
+
+        return (await _coursService.GetAllAsync())
+            .Where(c => c.EnseignantId == enseignantId.Value)
+            .Select(c => c.Id)
+            .ToHashSet();
     }
 }

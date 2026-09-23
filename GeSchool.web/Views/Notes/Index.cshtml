@@ -1,4 +1,4 @@
-@model IReadOnlyList<NoteDto>
+@model PagedList<NoteDto>
 @{
     ViewData["Title"] = "Notes";
     ViewData["Subtitle"] = "Suivre les notes des étudiants";
@@ -18,13 +18,17 @@
         @IconHelper.Render("search")
         <input type="search" class="form-control" placeholder="Rechercher..." data-table-search data-table-target="#notesTable" aria-label="Rechercher une note" />
     </div>
-    <a asp-action="Create" class="btn btn-primary">
+    <button type="button" class="btn btn-outline-secondary" data-csv-export data-csv-target="#notesTable" data-csv-filename="notes.csv">
+        @IconHelper.Render("download")
+        Exporter CSV
+    </button>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createNoteModal">
         @IconHelper.Render("plus")
         Nouvelle note
-    </a>
+    </button>
 </div>
 
-@if (Model.Count == 0)
+@if (Model.TotalCount == 0)
 {
     <partial name="_EmptyState" model="@(new EmptyStateViewModel { Icon = "file-text", Title = "Aucune note", Message = "Aucune note n'a encore été saisie.", ActionText = "Créer une note", ActionController = "Notes" })" />
 }
@@ -35,14 +39,14 @@ else
             <thead>
                 <tr>
                     <th>Inscription</th>
-                    <th>Valeur</th>
+                    <th><partial name="_SortLink" model="@(new SortLinkViewModel { Text = "Valeur", SortKey = "Valeur", CurrentSort = ViewBag.SortBy, CurrentDir = ViewBag.SortDir })" /></th>
                     <th>Type d'évaluation</th>
-                    <th>Date</th>
+                    <th><partial name="_SortLink" model="@(new SortLinkViewModel { Text = "Date", SortKey = "DateEvaluation", CurrentSort = ViewBag.SortBy, CurrentDir = ViewBag.SortDir })" /></th>
                     <th class="col-actions"></th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model)
+                @foreach (var item in Model.Items)
                 {
                     var label = labels.TryGetValue(item.InscriptionId, out var l) ? l : item.InscriptionId.ToString();
                     <tr data-row>
@@ -54,8 +58,10 @@ else
                         <td>@item.DateEvaluation.ToString("yyyy-MM-dd")</td>
                         <td class="col-actions">
                             <a asp-action="Details" asp-route-id="@item.Id" class="btn-icon" title="Détails" aria-label="Détails">@IconHelper.Render("eye")</a>
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn-icon" title="Modifier" aria-label="Modifier">@IconHelper.Render("pencil")</a>
-                            <button type="button" class="btn-icon" title="Supprimer" aria-label="Supprimer" data-bs-toggle="modal" data-bs-target="#confirmDeleteNote" data-id="@item.Id" data-label="@label">
+                            <button type="button" class="btn-icon" title="Modifier" aria-label="Modifier" data-bs-toggle="modal" data-bs-target="#editNoteModal" data-edit="@System.Text.Json.JsonSerializer.Serialize(new { item.Id, item.InscriptionId, item.Valeur, TypeEvaluation = (int)item.TypeEvaluation, DateEvaluation = item.DateEvaluation.ToString("yyyy-MM-dd"), url = Url.Action("Edit", new { id = item.Id }) })">
+                                @IconHelper.Render("pencil")
+                            </button>
+                            <button type="button" class="btn-icon" title="Supprimer" aria-label="Supprimer" data-bs-toggle="modal" data-bs-target="#confirmDeleteNote" data-id="@item.Id" data-label="@label" data-restore="@System.Text.Json.JsonSerializer.Serialize(new { item.InscriptionId, item.Valeur, TypeEvaluation = (int)item.TypeEvaluation, DateEvaluation = item.DateEvaluation.ToString("yyyy-MM-dd") })">
                                 @IconHelper.Render("trash")
                             </button>
                         </td>
@@ -66,7 +72,85 @@ else
                 </tr>
             </tbody>
         </table>
+        <partial name="_Pagination" model="Model" />
     </div>
 }
 
 <partial name="_ConfirmDeleteModal" model="@(new ConfirmDeleteModalViewModel { Id = "confirmDeleteNote", Title = "Supprimer cette note ?", Message = "Cette action est irréversible.", Controller = "Notes" })" />
+
+<div class="modal fade" id="createNoteModal" tabindex="-1" aria-labelledby="createNoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-controller="Notes" asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="createNoteModalLabel">Nouvelle note</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Inscription</label>
+                        <select name="InscriptionId" class="form-select" asp-items="@(ViewBag.InscriptionOptions as SelectList)">
+                            <option value="">-- Choisir une inscription --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Valeur</label>
+                        <input type="number" name="Valeur" step="0.01" min="0" max="20" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Type d'évaluation</label>
+                        <select name="TypeEvaluation" class="form-select" asp-items="Html.GetEnumSelectList<TypeEvaluation>()"></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date d'évaluation</label>
+                        <input type="date" name="DateEvaluation" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer la note</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editNoteModal" tabindex="-1" aria-labelledby="editNoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-controller="Notes" asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="editNoteModalLabel">Modifier la note</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="Id" />
+                    <div class="form-group">
+                        <label class="form-label">Inscription</label>
+                        <select name="InscriptionId" class="form-select" asp-items="@(ViewBag.InscriptionOptions as SelectList)">
+                            <option value="">-- Choisir une inscription --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Valeur</label>
+                        <input type="number" name="Valeur" step="0.01" min="0" max="20" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Type d'évaluation</label>
+                        <select name="TypeEvaluation" class="form-select" asp-items="Html.GetEnumSelectList<TypeEvaluation>()"></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date d'évaluation</label>
+                        <input type="date" name="DateEvaluation" class="form-control" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

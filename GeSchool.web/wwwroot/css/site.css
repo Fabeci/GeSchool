@@ -1,6 +1,7 @@
 @import url('variables.css');
 @import url('components.css');
 @import url('responsive.css');
+@import url('print.css');
 
 html {
   font-size: 16px;
