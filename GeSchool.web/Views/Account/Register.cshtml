@@ -1,0 +1,50 @@
+@model GeSchool.web.ViewModels.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Créer un compte";
+    Layout = "_LayoutAuth";
+}
+
+<div class="card">
+    <div class="card-body">
+        <h1 style="font-size:1.125rem;font-weight:700;margin:0 0 var(--space-1);">Créer un compte</h1>
+        <p style="font-size:.8125rem;color:var(--text-secondary);margin:0 0 var(--space-5);">
+            Réservé aux étudiants et enseignants déjà enregistrés par l'administration. Utilisez l'email figurant sur votre fiche.
+        </p>
+        <form asp-controller="Account" asp-action="Register" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom:var(--space-4);"></div>
+            <div class="form-group">
+                <label asp-for="Role" class="form-label"></label>
+                <select asp-for="Role" class="form-select">
+                    <option value="">-- Choisir --</option>
+                    <option value="Etudiant">Étudiant</option>
+                    <option value="Enseignant">Enseignant</option>
+                </select>
+                <span asp-validation-for="Role" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" autocomplete="username" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ConfirmPassword" class="form-label"></label>
+                <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:var(--space-3);">Créer mon compte</button>
+        </form>
+        <p style="font-size:.8125rem;color:var(--text-secondary);text-align:center;margin:var(--space-4) 0 0;">
+            <a asp-controller="Account" asp-action="Login">Déjà un compte ? Se connecter</a>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,56 @@
+<mxfile host="app.diagrams.net" agent="GeSchool" version="24.7.17" type="device">
+  <diagram name="Modele de donnees" id="modele-donnees">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="1500" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="dept" value="&lt;b&gt;DEPARTEMENT&lt;/b&gt;&lt;br&gt;Id : int (PK)&lt;br&gt;Nom : string&lt;br&gt;Description : string" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fontSize=12;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="460" y="40" width="220" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ens" value="&lt;b&gt;ENSEIGNANT&lt;/b&gt;&lt;br&gt;Id : int (PK)&lt;br&gt;Nom : string&lt;br&gt;Prenom : string&lt;br&gt;Email : string&lt;br&gt;Specialite : string&lt;br&gt;DepartementId : int (FK)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fontSize=12;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="260" width="240" height="170" as="geometry" />
+        </mxCell>
+
+        <mxCell id="etu" value="&lt;b&gt;ETUDIANT&lt;/b&gt;&lt;br&gt;Id : int (PK)&lt;br&gt;NumeroEtudiant : string (UK)&lt;br&gt;Nom : string&lt;br&gt;Prenom : string&lt;br&gt;Email : string&lt;br&gt;DateNaissance : datetime&lt;br&gt;DepartementId : int (FK)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fontSize=12;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="820" y="260" width="260" height="190" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cours" value="&lt;b&gt;COURS&lt;/b&gt;&lt;br&gt;Id : int (PK)&lt;br&gt;Code : string (UK)&lt;br&gt;Intitule : string&lt;br&gt;Credits : int&lt;br&gt;Semestre : string&lt;br&gt;DepartementId : int (FK)&lt;br&gt;EnseignantId : int (FK)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fontSize=12;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="420" y="520" width="260" height="190" as="geometry" />
+        </mxCell>
+
+        <mxCell id="insc" value="&lt;b&gt;INSCRIPTION&lt;/b&gt;&lt;br&gt;Id : int (PK)&lt;br&gt;EtudiantId : int (FK)&lt;br&gt;CoursId : int (FK)&lt;br&gt;DateInscription : datetime&lt;br&gt;&lt;i&gt;Unique : (EtudiantId, CoursId)&lt;/i&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fontSize=12;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="620" y="820" width="260" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="note" value="&lt;b&gt;NOTE&lt;/b&gt;&lt;br&gt;Id : int (PK)&lt;br&gt;InscriptionId : int (FK)&lt;br&gt;Valeur : decimal (0-20)&lt;br&gt;TypeEvaluation : enum&lt;br&gt;DateEvaluation : datetime" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fontSize=12;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="630" y="1030" width="240" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e1" value="1 &#8212; N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;fontSize=11;" edge="1" parent="1" source="dept" target="ens">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="1 &#8212; N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;fontSize=11;" edge="1" parent="1" source="dept" target="etu">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="1 &#8212; N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;fontSize=11;" edge="1" parent="1" source="dept" target="cours">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="1 &#8212; N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;fontSize=11;" edge="1" parent="1" source="ens" target="cours">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="1 &#8212; N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;fontSize=11;" edge="1" parent="1" source="etu" target="insc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="1 &#8212; N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;fontSize=11;" edge="1" parent="1" source="cours" target="insc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="1 &#8212; N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;fontSize=11;" edge="1" parent="1" source="insc" target="note">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

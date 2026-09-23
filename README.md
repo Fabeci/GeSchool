@@ -19,7 +19,7 @@ GeSchool.Infrastructure (EF Core, Identity, repositories)
 GeSchool.Domain (entités métier)
 ```
 
-Voir [Architecture.md](Architecture.md) pour le détail des règles de dépendance et [Rapport-de-projet.md](Rapport-de-projet.md) pour la présentation complète du projet (cahier des charges reformulé, modèle de données, choix techniques, difficultés rencontrées).
+Voir [Rapport-de-projet.md](Rapport-de-projet.md) pour la présentation complète du projet (cahier des charges reformulé, modèle de données, règles de dépendance entre les couches, choix techniques, difficultés rencontrées).
 
 ## Technologies
 
@@ -63,7 +63,7 @@ Au premier démarrage, si aucun compte n'a le rôle `Administrateur`, un compte 
 
 | Email | Mot de passe |
 |---|---|
-| `admin@geschool.local` | `Admin@12345` |
+| `admin@supinfo.sn` | `Admin@12345` |
 
 **À changer immédiatement après la première connexion en dehors d'un environnement de développement local.**
 
@@ -71,7 +71,9 @@ Au premier démarrage, si aucun compte n'a le rôle `Administrateur`, un compte 
 
 Un écran réservé au rôle `Administrateur` (`/Users`) permet de créer des comptes utilisateurs avec assignation de rôle, et de les lier optionnellement à une fiche `Etudiant` ou `Enseignant` existante (`ApplicationUser.EtudiantId`/`EnseignantId`). Cette liaison est ce qui permet à un compte Étudiant/Enseignant d'accéder à son propre espace ; sans elle, ces espaces affichent un message clair plutôt que de planter.
 
-**Limitations actuelles** : pas d'inscription publique (voir « Choix assumés » ci-dessous), pas d'édition de compte existant ni de liaison rétroactive après création (seulement au moment du `Create`).
+Les Étudiants et Enseignants peuvent aussi créer leur propre compte via `/Account/Register` (voir « Auto-inscription » ci-dessous) — l'Administrateur reste le seul moyen de créer un compte **Administrateur**.
+
+**Limitations actuelles** : pas d'édition de compte existant ni de liaison rétroactive après création par l'Administrateur (seulement au moment du `Create`).
 
 ## Permissions par rôle
 
@@ -86,10 +88,15 @@ Un écran réservé au rôle `Administrateur` (`/Users`) permet de créer des co
 
 Le périmètre "ses cours" d'un Enseignant est déterminé par la liaison `ApplicationUser.EnseignantId`. Toute tentative d'accès (même par manipulation directe d'URL ou de formulaire) à une ressource hors de ce périmètre renvoie un refus d'accès — voir `GeSchool.web/Controllers/CoursController.cs`, `EtudiantsController.cs`, `InscriptionsController.cs`, `NotesController.cs`.
 
+## Auto-inscription
+
+`/Account/Register` (`AccountController.Register`) permet à un Étudiant ou un Enseignant de créer lui-même son compte, en réponse à l'exigence du sujet *« Mettre en place l'inscription et la connexion des utilisateurs »*. Le formulaire ne demande que : rôle (Étudiant/Enseignant — **Administrateur n'est jamais proposé, et une tentative de le forcer par requête manipulée est rejetée côté serveur**), email, mot de passe.
+
+Contrainte de sécurité : l'email saisi doit correspondre exactement à celui d'une fiche `Etudiant`/`Enseignant` **déjà créée par un Administrateur**, et cette fiche ne doit pas déjà être liée à un autre compte. Le nom/prénom du compte sont recopiés depuis cette fiche (jamais saisis librement), pour qu'un utilisateur ne puisse pas s'inventer une identité — il ne fait que réclamer un compte pour une fiche déjà vérifiée. Sans correspondance, l'inscription est refusée avec un message explicite invitant à contacter l'administration.
+
 ## Choix assumés (divergences documentées vs. le sujet)
 
-- **Pas d'inscription publique** : le sujet mentionne *« Mettre en place l'inscription et la connexion des utilisateurs »*. Par choix de sécurité, seuls les Administrateurs créent des comptes (`/Users/Create`) — pas de formulaire d'auto-inscription. Détails et alternative dans le rapport de projet.
-- **FluentValidation plutôt que Data Annotations** : le sujet impose *« Validation des données côté serveur obligatoire (Data Annotations) »*. Les DTOs de `GeSchool.Application` sont validés par FluentValidation (invoqué explicitement dans les controllers), pour garder la validation métier dans la couche Application plutôt que sur des attributs attachés aux objets. Les ViewModels purement UI (`LoginViewModel`, `CreateUserViewModel`) utilisent, eux, des Data Annotations classiques. Conséquence : la validation côté client ne couvre que les champs texte obligatoires (effet des types non-nullables C#), pas les règles métier (`Credits > 0`, `Valeur` 0–20, etc.), qui sont vérifiées côté serveur après soumission.
+- **FluentValidation plutôt que Data Annotations** : le sujet impose *« Validation des données côté serveur obligatoire (Data Annotations) »*. Les DTOs de `GeSchool.Application` sont validés par FluentValidation (invoqué explicitement dans les controllers), pour garder la validation métier dans la couche Application plutôt que sur des attributs attachés aux objets. Les ViewModels purement UI (`LoginViewModel`, `RegisterViewModel`, `CreateUserViewModel`) utilisent, eux, des Data Annotations classiques. Conséquence : la validation côté client ne couvre que les champs texte obligatoires (effet des types non-nullables C#), pas les règles métier (`Credits > 0`, `Valeur` 0–20, etc.), qui sont vérifiées côté serveur après soumission.
 
 ## État actuel
 
